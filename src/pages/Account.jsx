@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { showSuccess, showError, showInfo } from "../notify.jsx";
 import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
@@ -250,12 +250,8 @@ export default function Account() {
             <h3>Prefer to try it?</h3>
           </div>
           <p className="pp-account-danger-text">
-            You can also explore the platform for yourself — head to the
-            scanner or the How It Works guide.
+            Share PackPure with others so they can verify product labels too.
           </p>
-          <Link to="/scanner" className="pp-btn pp-btn-primary">
-            Open Scanner
-          </Link>
           <button
             className="pp-btn pp-btn-ghost"
             onClick={shareWebsite}

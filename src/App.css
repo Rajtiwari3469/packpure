@@ -2817,6 +2817,7 @@ input:focus-visible {
 }
 
 .pp-account-block {
+  margin-bottom: 28px;
   padding: 24px;
   background: var(--surface);
   border: 1px solid var(--border);
