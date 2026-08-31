@@ -47,13 +47,43 @@ function toPg(sqlText, params) {
 }
 
 /**
+ * Execute a query using the neon *tagged-template* code path.
+ *
+ * IMPORTANT: on this Neon pooled/HTTP connection, `sql.query(text, params)`
+ * silently fails to persist writes and returns empty reads, while the
+ * `sql\`...\`` tagged-template path works correctly (verified empirically).
+ * So every statement is built as a tag invocation.
+ *
+ * We split the (already ? -> $n converted) SQL text on its $1..$n markers
+ * into string pieces and spread the bound values as interpolation args,
+ * exactly mimicking what the JS tagged-template runtime does.
+ */
+async function exec(sqlText, params = []) {
+  const { text: t, params: p } = toPg(sqlText, params);
+
+  const pieces = [];
+  let last = 0;
+  for (let i = 0; i < p.length; i++) {
+    const marker = `$${i + 1}`;
+    const pos = t.indexOf(marker);
+    pieces.push(t.slice(last, pos));
+    last = pos + marker.length;
+  }
+  pieces.push(t.slice(last));
+
+  const strings = pieces;
+  Object.defineProperty(strings, "raw", { value: [...pieces] });
+  return await sql(strings, ...p);
+}
+
+/**
  * Run an arbitrary query with sql.js-style `?` params.
  * Returns the affected row count for writes.
  */
 export async function run(sqlText, params = []) {
-  const { text, params: p } = toPg(sqlText, params);
-  const result = await sql.query(text, p);
-  return { rowCount: result ? result.rows.length : 0 };
+  const result = await exec(sqlText, params);
+  const rows = result && result.rows ? result.rows : [];
+  return { rowCount: rows.length };
 }
 
 /**
@@ -62,29 +92,25 @@ export async function run(sqlText, params = []) {
  */
 export async function insert(sqlText, params = []) {
   let text = String(sqlText).trim().replace(/;\s*$/, "");
-  const { text: convText, params: p } = toPg(text, params);
-  const finalSql = `${convText} RETURNING id`;
-  const result = await sql.query(finalSql, p);
-  const rows = result && result.rows ? result.rows : Array.isArray(result) ? result : [];
+  const result = await exec(`${text} RETURNING id`, params);
+  const rows = result && result.rows ? result.rows : [];
   const row = rows.length ? rows[0] : null;
   if (!row) {
-    console.error("[db] insert returned no row; result=", JSON.stringify(result && result.fields));
+    console.error("[db] insert returned no row");
   }
   return row ? Number(row.id) : null;
 }
 
 /** Return the first row (object) or null. */
 export async function get(sqlText, params = []) {
-  const { text, params: p } = toPg(sqlText, params);
-  const result = await sql.query(text, p);
+  const result = await exec(sqlText, params);
   const rows = result && result.rows ? result.rows : [];
   return rows.length ? rows[0] : null;
 }
 
 /** Return all rows as an array of objects. */
 export async function all(sqlText, params = []) {
-  const { text, params: p } = toPg(sqlText, params);
-  const result = await sql.query(text, p);
+  const result = await exec(sqlText, params);
   return result && result.rows ? result.rows : [];
 }
 
