@@ -117,6 +117,7 @@ app.get("/api/_debug/admin", async (req, res) => {
       writeTest: { marker, insertReturned: writeResult, readBack: markerBack },
       rawWriteTest: { rawResult, rawBack },
       execTest: execTest ? { text: execTest.text, params: execTest.params, rows: execTest.rows, hasResult: Boolean(execTest.rawResult) } : execTest,
+      execSelectCount: (await db.execDebug(`SELECT count(*)::int AS c FROM users`)).rows,
       envEmail: email,
       envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
     });
