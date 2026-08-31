@@ -1954,6 +1954,39 @@ input:focus-visible {
   background: var(--danger-bg);
 }
 
+.pp-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong, var(--accent)));
+  border-color: transparent;
+  box-shadow: 0 6px 16px -6px var(--accent-shadow, rgba(0, 0, 0, 0.3));
+}
+
+.pp-share-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -8px var(--accent-shadow, rgba(0, 0, 0, 0.35));
+}
+
+.pp-share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+
+  font-size: 15px;
+  line-height: 1;
+
+  color: var(--accent);
+  background: #fff;
+  border-radius: 50%;
+}
+
 .pp-btn-lg {
   min-height: 48px;
   padding: 0 26px;

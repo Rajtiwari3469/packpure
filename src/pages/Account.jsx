@@ -253,10 +253,13 @@ export default function Account() {
             Share PackPure with others so they can verify product labels too.
           </p>
           <button
-            className="pp-btn pp-btn-ghost"
+            className="pp-btn pp-share-btn"
             onClick={shareWebsite}
           >
-            {shareCopied ? "✓ Link Copied" : "Share Website Link"}
+            <span className="pp-share-icon" aria-hidden="true">
+              {shareCopied ? "✓" : "➦"}
+            </span>
+            {shareCopied ? "Link Copied" : "Share Website Link"}
           </button>
         </div>
 
