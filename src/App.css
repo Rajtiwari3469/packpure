@@ -1937,6 +1937,9 @@ input:focus-visible {
 
 .pp-user {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .pp-user-trigger {
