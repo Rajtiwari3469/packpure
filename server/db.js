@@ -46,8 +46,9 @@ function toPg(sqlText, params) {
   );
   // datetime('now') form
   s = s.replace(/datetime\(\s*'now'\s*\)/g, "now()::text");
-  // date('now') form
-  s = s.replace(/date\(\s*'now'\s*\)/g, "CURRENT_DATE");
+  // date('now') form (TEXT columns need an explicit ::text cast so that
+  // comparisons like `created_at >= date('now')` don't hit "text >= date")
+  s = s.replace(/date\(\s*'now'\s*\)/g, "CURRENT_DATE::text");
 
   // Replace `?` placeholders left-to-right with $1..$n
   let i = 0;
