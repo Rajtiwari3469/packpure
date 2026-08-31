@@ -1,16 +1,22 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { showSuccess, showError, showInfo } from "../notify.jsx";
 import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
 import Avatar from "../components/Avatar.jsx";
 
 export default function Account() {
-  const { updateUser } = useAuth();
+  const { updateUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [scanCount, setScanCount] = useState(0);
   const [form, setForm] = useState({});
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletePw, setDeletePw] = useState("");
+  const [deleteErr, setDeleteErr] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -60,6 +66,34 @@ export default function Account() {
       showError("Could not update profile", err.status === 401 ? "Your session has expired. Please log in again." : "Please check the highlighted fields and try again.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    setDeleteErr("");
+    if (!deletePw) {
+      setDeleteErr("Please enter your password to confirm.");
+      return;
+    }
+    setDeleting(true);
+    try {
+      await api.deleteAccount({ password: deletePw });
+      await logout();
+      setConfirmOpen(false);
+      showSuccess(
+        "Account deleted",
+        "Your account and all associated data have been permanently removed."
+      );
+      navigate("/", { replace: true });
+    } catch (err) {
+      setDeleteErr(
+        err.message === "Incorrect password. Your account was not deleted."
+          ? "Incorrect password. Please try again."
+          : err.message || "Could not delete your account."
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -188,7 +222,81 @@ export default function Account() {
             </div>
           )}
         </div>
+
+        <div className="pp-account-block pp-account-danger">
+          <div className="pp-account-block-head">
+            <h3>Delete Account</h3>
+          </div>
+          <p className="pp-account-danger-text">
+            Permanently delete your account, scans, and all associated data.
+            This action cannot be undone.
+          </p>
+          <button
+            className="pp-btn pp-btn-danger"
+            onClick={() => {
+              setDeleteErr("");
+              setDeletePw("");
+              setConfirmOpen(true);
+            }}
+          >
+            Delete Account
+          </button>
+        </div>
       </section>
+
+      {confirmOpen && (
+        <div className="pp-modal-overlay" onClick={() => !deleting && setConfirmOpen(false)}>
+          <div className="pp-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className="pp-modal-head">
+              <h3>Delete Account</h3>
+              <button
+                className="pp-modal-close"
+                aria-label="Close"
+                onClick={() => !deleting && setConfirmOpen(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="pp-modal-text">
+              This will permanently delete <strong>{user.email}</strong> and
+              all scan history. This action cannot be undone.
+            </p>
+            <form className="pp-form" onSubmit={handleDelete}>
+              <div className="pp-field">
+                <label htmlFor="deletePassword">Enter your password to confirm</label>
+                <input
+                  id="deletePassword"
+                  type="password"
+                  placeholder="Your password"
+                  value={deletePw}
+                  onChange={(e) => {
+                    setDeletePw(e.target.value);
+                    setDeleteErr("");
+                  }}
+                  autoFocus
+                />
+              </div>
+              {deleteErr && <div className="pp-form-error">{deleteErr}</div>}
+              <div className="pp-modal-actions">
+                <button
+                  type="button"
+                  className="pp-btn pp-btn-ghost"
+                  onClick={() => !deleting && setConfirmOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="pp-btn pp-btn-danger"
+                  disabled={deleting}
+                >
+                  {deleting ? "Deleting…" : "Delete My Account"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -48,6 +48,7 @@ export const api = {
     request("PATCH", "/api/user/password", payload),
   account: () => request("GET", "/api/account"),
   updateAccount: (payload) => request("PATCH", "/api/account", payload),
+  deleteAccount: (payload) => request("DELETE", "/api/account", payload),
   getScans: () => request("GET", "/api/scans"),
   getScan: (id) => request("GET", `/api/scans/${id}`),
   createScan: (payload) => request("POST", "/api/scans", payload),

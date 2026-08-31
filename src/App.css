@@ -3969,3 +3969,76 @@ input:focus-visible {
     width: auto;
   }
 }
+
+/* ---------- Account: Delete Account ---------- */
+
+.pp-account-block.pp-account-danger {
+  border-color: var(--danger-border);
+  background: color-mix(in srgb, var(--danger-bg) 28%, var(--surface));
+  margin-top: 18px;
+}
+
+.pp-account-danger-text {
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+  font-size: 14px;
+}
+
+/* ---------- Modal ---------- */
+
+.pp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.pp-modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  padding: 24px;
+}
+
+.pp-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pp-modal-head h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.pp-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.pp-modal-text {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 0 0 18px;
+}
+
+.pp-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}

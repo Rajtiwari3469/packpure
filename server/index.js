@@ -307,6 +307,22 @@ app.patch("/api/account", requireAuth, async (req, res) => {
   const fresh = await db.get(`SELECT * FROM users WHERE id = ?`, [req.user.id]);
   res.json({ user: publicUser(fresh) });
 });
+app.delete("/api/account", requireAuth, async (req, res) => {
+  const { password } = req.body || {};
+  if (!password || !String(password)) {
+    return res.status(400).json({ error: "Please enter your password to confirm account deletion." });
+  }
+
+  const stored = await db.get(`SELECT password_hash FROM users WHERE id = ?`, [req.user.id]);
+  const ok = stored && (await comparePassword(String(password), stored.password_hash));
+  if (!ok) {
+    return res.status(400).json({ error: "Incorrect password. Your account was not deleted." });
+  }
+
+  await db.run(`DELETE FROM users WHERE id = ?`, [req.user.id]);
+  res.clearCookie(COOKIE_NAME);
+  res.json({ ok: true });
+});
 
 /* ---------------------------------------------------------
    USER (dashboard / profile / settings)
