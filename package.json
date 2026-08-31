@@ -11,7 +11,7 @@
     "dev:all": "concurrently \"npm run server\" \"npm run dev\""
   },
   "dependencies": {
-    "@neondatabase/serverless": "^1.1.0",
+    "@neondatabase/serverless": "1.1.0",
     "@tailwindcss/vite": "^4.3.3",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",

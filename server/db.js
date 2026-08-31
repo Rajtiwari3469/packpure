@@ -62,11 +62,11 @@ export async function run(sqlText, params = []) {
  */
 export async function insert(sqlText, params = []) {
   let text = String(sqlText).trim().replace(/;\s*$/, "");
-  // Convert placeholders & datetime in the INSERT portion
   const { text: convText, params: p } = toPg(text, params);
   const finalSql = `${convText} RETURNING id`;
   const result = await sql.query(finalSql, p);
-  const row = result && result.rows && result.rows.length ? result.rows[0] : null;
+  const rows = result && result.rows ? result.rows : Array.isArray(result) ? result : [];
+  const row = rows.length ? rows[0] : null;
   return row ? Number(row.id) : null;
 }
 

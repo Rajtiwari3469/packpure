@@ -163,8 +163,14 @@ app.post("/api/auth/signup", async (req, res) => {
       age ? Number(age) : null,
     ]
   );
+  if (!id) {
+    return res.status(500).json({ error: "Could not create the account. Please try again." });
+  }
 
   const user = await db.get(`SELECT * FROM users WHERE id = ?`, [id]);
+  if (!user) {
+    return res.status(500).json({ error: "Could not create the account. Please try again." });
+  }
   const token = await createSession(user.id);
 
   await addActivity({ userId: user.id, type: "account", title: "Account created", detail: `${user.full_name} registered as a new user.` });
