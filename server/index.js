@@ -81,13 +81,25 @@ app.get("/api/_debug/admin", async (req, res) => {
     const row = await db.get(`SELECT id, email, role, status, password_hash FROM users WHERE lower(email) = lower(?)`, [email]);
     const admins = await db.all(`SELECT id, email, role, status FROM users WHERE role IN ('admin','super_admin')`);
     const users = await db.all(`SELECT id, email, role FROM users ORDER BY id`);
+    // write-test: insert a marker and read it back in the same request
+    const marker = `marker_${Date.now()}`;
+    let writeResult = null;
+    let markerBack = null;
+    try {
+      const mid = await db.insert(`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active') ON CONFLICT (email) DO NOTHING`, [marker, `${marker}@example.com`, "000", "x", ""]);
+      writeResult = mid;
+      markerBack = await db.get(`SELECT id FROM users WHERE email = ?`, [`${marker}@example.com`]);
+    } catch (e) {
+      writeResult = "ERR:" + e.message;
+    }
     res.json({
       target: email,
       found: Boolean(row),
       row: row ? { id: row.id, email: row.email, role: row.role, status: row.status } : null,
       passwordMatches: row ? await comparePassword(process.env.ADMIN_PASSWORD || "Admin@12345", row.password_hash) : null,
       allAdmins: admins,
-      allUsers: users,
+      allUsersCount: users.length,
+      writeTest: { marker, insertReturned: writeResult, readBack: markerBack },
       envEmail: email,
       envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
     });
