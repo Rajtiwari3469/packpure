@@ -85,12 +85,21 @@ app.get("/api/_debug/admin", async (req, res) => {
     const marker = `marker_${Date.now()}`;
     let writeResult = null;
     let markerBack = null;
+    let rawResult = null;
+    let rawBack = null;
     try {
       const mid = await db.insert(`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active') ON CONFLICT (email) DO NOTHING`, [marker, `${marker}@example.com`, "000", "x", ""]);
       writeResult = mid;
       markerBack = await db.get(`SELECT id FROM users WHERE email = ?`, [`${marker}@example.com`]);
     } catch (e) {
       writeResult = "ERR:" + e.message;
+    }
+    try {
+      const marker2 = `marker2_${Date.now()}`;
+      await db.rawQuery((sql) => sql`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (${marker2}, ${marker2 + '@example.com'}, '000', 'x', '', 'user', 'active')`);
+      rawBack = await db.rawQuery((sql) => sql`SELECT id::text AS id FROM users WHERE email = ${marker2 + '@example.com'}`);
+    } catch (e) {
+      rawResult = "ERR:" + e.message;
     }
     res.json({
       target: email,
@@ -100,6 +109,7 @@ app.get("/api/_debug/admin", async (req, res) => {
       allAdmins: admins,
       allUsersCount: users.length,
       writeTest: { marker, insertReturned: writeResult, readBack: markerBack },
+      rawWriteTest: { rawResult, rawBack },
       envEmail: email,
       envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
     });

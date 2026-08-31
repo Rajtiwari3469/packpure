@@ -88,6 +88,11 @@ export async function all(sqlText, params = []) {
   return result && result.rows ? result.rows : [];
 }
 
+/** Exposed for diagnostics: run using tagged-template (non-query) path. */
+export async function rawQuery(fn) {
+  return fn(sql);
+}
+
 /* =========================================================
    SCHEMA
 ========================================================= */
@@ -391,4 +396,4 @@ export async function init() {
   console.log("[db] Neon Postgres connected & schema ready");
 }
 
-export default { init, run, insert, get, all };
+export default { init, run, insert, get, all, rawQuery };
