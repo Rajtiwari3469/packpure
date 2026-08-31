@@ -74,9 +74,10 @@ export async function getSessionUser(token) {
 }
 
 export function cookieOptions() {
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isProduction,
     sameSite: "lax",
     maxAge: SESSION_TTL_MS,
     path: "/",

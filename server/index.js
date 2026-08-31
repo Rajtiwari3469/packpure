@@ -80,7 +80,8 @@ app.get("/api/health", (req, res) => {
 -------------------------------------------------------- */
 
 async function adminSession(req, res, next) {
-  if (req.path === "/auth/login") return next();
+  const adminPath = req.originalUrl.replace(/^\/api\/admin/, "");
+  if (adminPath === "/auth/login" || adminPath === "/auth/login?") return next();
   const token = req.cookies[COOKIE_NAME];
   const user = await getSessionUser(token);
   if (!user) return res.status(401).json({ error: "Authentication required." });
