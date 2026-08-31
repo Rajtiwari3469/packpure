@@ -7,10 +7,9 @@ const DATABASE_URL =
 
 if (!DATABASE_URL) {
   console.error("Missing NEON_DATABASE_URL (see .env.example)");
-  process.exit(1);
 }
 
-const sql = neon(DATABASE_URL);
+const sql = DATABASE_URL ? neon(DATABASE_URL) : null;
 
 /**
  * Convert SQLite-style SQL to Postgres:
@@ -376,6 +375,7 @@ let initialized = false;
 
 export async function init() {
   if (initialized) return;
+  if (!sql) throw new Error("NEON_DATABASE_URL environment variable is not set.");
   await migrate();
   await seedDefaults();
   initialized = true;

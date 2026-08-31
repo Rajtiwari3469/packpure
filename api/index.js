@@ -6,15 +6,26 @@
 import app, { initDb } from "../server/index.js";
 
 // Initialize schema + seed once, before serving the first request.
-const ready = initDb().catch((err) => {
+// On failure, retry on the next invocation instead of permanently blocking all requests.
+let dbReady = initDb().catch((err) => {
   console.error("[vercel] DB init failed:", err);
-  return null;
+  return false;
 });
 
 export default async function handler(req, res) {
-  const dbStatus = await ready;
-  if (dbStatus === null) {
-    return res.status(503).json({ error: "Database not available." });
+  const status = await dbReady;
+  if (status === false) {
+    // Retry init on this request
+    dbReady = initDb().catch((err) => {
+      console.error("[vercel] DB init retry failed:", err);
+      return false;
+    });
+    const retryStatus = await dbReady;
+    if (retryStatus === false) {
+      return res.status(503).json({
+        error: "Database not available. Ensure NEON_DATABASE_URL is set in Vercel environment variables.",
+      });
+    }
   }
   app(req, res);
 }
