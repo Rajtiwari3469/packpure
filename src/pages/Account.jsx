@@ -17,6 +17,7 @@ export default function Account() {
   const [deletePw, setDeletePw] = useState("");
   const [deleteErr, setDeleteErr] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -94,6 +95,27 @@ export default function Account() {
       );
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const shareWebsite = async () => {
+    const url = "https://packpure.vercel.app";
+    const title = "PackPure — Verify Product Labels";
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+        return;
+      }
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      showSuccess("Link copied", "packpure.vercel.app copied to clipboard.", { id: "share-copy" });
+      setTimeout(() => setShareCopied(false), 2000);
+    } catch {
+      showError("Couldn't share", "Please copy the link manually: packpure.vercel.app", { id: "share-fail" });
     }
   };
 
@@ -234,6 +256,12 @@ export default function Account() {
           <Link to="/scanner" className="pp-btn pp-btn-primary">
             Open Scanner
           </Link>
+          <button
+            className="pp-btn pp-btn-ghost"
+            onClick={shareWebsite}
+          >
+            {shareCopied ? "✓ Link Copied" : "Share Website Link"}
+          </button>
         </div>
 
         <div className="pp-account-block pp-account-danger">
