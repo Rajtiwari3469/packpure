@@ -24,12 +24,15 @@ function toPg(sqlText, params) {
   let s = String(sqlText);
 
   // datetime('now', '-7 days' / '-60 seconds' / '-${n} days') forms
+  // Columns storing datetime are TEXT, so emit explicit text casts so that
+  // comparisons like `created_at >= datetime('now','-7 days')` work against
+  // TEXT columns without "operator does not exist: text <= timestamp".
   s = s.replace(
     /datetime\(\s*'now'\s*,\s*'-(\d+)\s+(\w+)'\s*\)/g,
-    (_, n, unit) => `now() - interval '${n} ${unit}'`
+    (_, n, unit) => `(now() - interval '${n} ${unit}')::text`
   );
   // datetime('now') form
-  s = s.replace(/datetime\(\s*'now'\s*\)/g, "now()");
+  s = s.replace(/datetime\(\s*'now'\s*\)/g, "now()::text");
   // date('now') form
   s = s.replace(/date\(\s*'now'\s*\)/g, "CURRENT_DATE");
 

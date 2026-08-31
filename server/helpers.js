@@ -158,8 +158,8 @@ export async function activeAnnouncementMessage() {
   const rows = await db.all(
     `SELECT * FROM announcements
      WHERE status = 'published'
-       AND (start_at IS NULL OR start_at <= datetime('now'))
-       AND (end_at IS NULL OR end_at >= datetime('now'))
+       AND (start_at IS NULL OR start_at::timestamptz <= now())
+       AND (end_at IS NULL OR end_at::timestamptz >= now())
      ORDER BY id DESC LIMIT 1`
   );
   if (rows.length) return rows[0];
