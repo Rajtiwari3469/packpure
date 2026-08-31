@@ -100,24 +100,42 @@ function AdminBell({ badgeCount }) {
                     {n.detail && <p>{n.detail}</p>}
                     <span className="adm-notif-time">{timeAgo(n.created_at)}</span>
                   </div>
-                  {!n.read && (
+                  <div className="adm-notif-actions">
+                    {!n.read && (
+                      <button
+                        className="adm-notif-btn"
+                        title="Mark as read"
+                        aria-label="Mark as read"
+                        onClick={async () => {
+                          await adminApi.markNotificationRead(n.id);
+                          setData((d) => ({
+                            ...d,
+                            unread: Math.max(0, d.unread - 1),
+                            notifications: d.notifications.map((x) =>
+                              x.id === n.id ? { ...x, read: 1 } : x
+                            ),
+                          }));
+                        }}
+                      >
+                        ✓
+                      </button>
+                    )}
                     <button
-                      className="adm-notif-read"
-                      title="Mark as read"
+                      className="adm-notif-btn danger"
+                      title="Delete notification"
+                      aria-label="Delete notification"
                       onClick={async () => {
-                        await adminApi.markNotificationRead(n.id);
+                        await adminApi.archiveNotification(n.id);
                         setData((d) => ({
                           ...d,
-                          unread: Math.max(0, d.unread - 1),
-                          notifications: d.notifications.map((x) =>
-                            x.id === n.id ? { ...x, read: 1 } : x
-                          ),
+                          unread: n.read ? d.unread : Math.max(0, d.unread - 1),
+                          notifications: d.notifications.filter((x) => x.id !== n.id),
                         }));
                       }}
                     >
-                      ✓
+                      ✕
                     </button>
-                  )}
+                  </div>
                 </div>
               ))
             )}

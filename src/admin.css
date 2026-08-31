@@ -1796,17 +1796,27 @@
 .adm-notif-row-body strong { font-size: 13.5px; display: block; }
 .adm-notif-row-body p { margin: 3px 0 0; font-size: 12.5px; color: var(--adm-muted, #6b7280); line-height: 1.4; }
 .adm-notif-time { display: block; margin-top: 5px; font-size: 11px; color: var(--adm-muted, #6b7280); }
-.adm-notif-read {
+.adm-notif-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   flex: none;
-  width: 26px;
-  height: 26px;
+}
+.adm-notif-btn {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   border: 1px solid var(--adm-border, rgba(128,128,128,0.3));
   background: none;
   color: var(--adm-g, #1b7a43);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  line-height: 1;
   display: grid;
   place-items: center;
+  transition: background 0.15s, color 0.15s;
 }
-.adm-notif-read:hover { background: var(--adm-g, #1b7a43); color: #fff; }
+.adm-notif-btn:hover { background: var(--adm-g, #1b7a43); color: #fff; }
+.adm-notif-btn.danger { color: var(--adm-red, #dc2626); }
+.adm-notif-btn.danger:hover { background: var(--adm-red, #dc2626); color: #fff; }
+
