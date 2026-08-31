@@ -75,56 +75,6 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.get("/api/_debug/admin", async (req, res) => {
-  try {
-    const email = process.env.ADMIN_EMAIL || "admin@packpure.com";
-    const row = await db.get(`SELECT id, email, role, status, password_hash FROM users WHERE lower(email) = lower(?)`, [email]);
-    const admins = await db.all(`SELECT id, email, role, status FROM users WHERE role IN ('admin','super_admin')`);
-    const users = await db.all(`SELECT id, email, role FROM users ORDER BY id`);
-    // write-test: insert a marker and read it back in the same request
-    const marker = `marker_${Date.now()}`;
-    let writeResult = null;
-    let markerBack = null;
-    let rawResult = null;
-    let rawBack = null;
-    let execTest = null;
-    try {
-      const mid = await db.insert(`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active') ON CONFLICT (email) DO NOTHING`, [marker, `${marker}@example.com`, "000", "x", ""]);
-      writeResult = mid;
-      markerBack = await db.get(`SELECT id FROM users WHERE email = ?`, [`${marker}@example.com`]);
-    } catch (e) {
-      writeResult = "ERR:" + e.message;
-    }
-    try {
-      const marker2 = `marker2_${Date.now()}`;
-      await db.rawQuery((sql) => sql`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (${marker2}, ${marker2 + '@example.com'}, '000', 'x', '', 'user', 'active')`);
-      rawBack = await db.rawQuery((sql) => sql`SELECT id::text AS id FROM users WHERE email = ${marker2 + '@example.com'}`);
-    } catch (e) {
-      rawResult = "ERR:" + e.message;
-    }
-    try {
-      execTest = await db.execDebug(`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active')`, ["execmarker", "execmarker@example.com", "000", "x", ""]);
-    } catch (e) {
-      execTest = "ERR:" + e.message;
-    }
-    res.json({
-      target: email,
-      found: Boolean(row),
-      row: row ? { id: row.id, email: row.email, role: row.role, status: row.status } : null,
-      passwordMatches: row ? await comparePassword(process.env.ADMIN_PASSWORD || "Admin@12345", row.password_hash) : null,
-      allAdmins: admins,
-      allUsersCount: users.length,
-      writeTest: { marker, insertReturned: writeResult, readBack: markerBack },
-      rawWriteTest: { rawResult, rawBack },
-      execTest: execTest ? { text: execTest.text, params: execTest.params, rows: execTest.rows, hasResult: Boolean(execTest.rawResult) } : execTest,
-      execSelectCount: (await db.execDebug(`SELECT count(*)::int AS c FROM users`)).rows,
-      envEmail: email,
-      envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 /* ---------------------------------------------------------
    ADMIN ROUTES

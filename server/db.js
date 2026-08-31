@@ -95,22 +95,6 @@ export async function all(sqlText, params = []) {
   return res.rows || [];
 }
 
-/** Exposed for diagnostics: run using tagged-template (non-query) path. */
-export async function rawQuery(fn) {
-  return fn({ query: (t, p) => pool.query(t, p) });
-}
-
-/** Diagnostics: execute a query and return the raw result. */
-export async function execDebug(sqlText, params = []) {
-  const res = await q(sqlText, params);
-  return {
-    text: toPg(sqlText, params).text,
-    params,
-    hasResult: Boolean(res),
-    rows: res.rows || null,
-  };
-}
-
 /* =========================================================
    SCHEMA
 ========================================================= */
@@ -415,4 +399,4 @@ export async function init() {
   console.log("[db] Neon Postgres connected & schema ready");
 }
 
-export default { init, run, insert, get, all, rawQuery, execDebug };
+export default { init, run, insert, get, all };
