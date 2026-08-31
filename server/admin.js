@@ -417,6 +417,14 @@ router.patch("/compliance/:id", requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+router.delete("/compliance/:id", requireAdmin, async (req, res) => {
+  const existing = await db.get(`SELECT id, code FROM compliance_rules WHERE id = ?`, [req.params.id]);
+  if (!existing) return res.status(404).json({ error: "Compliance rule not found." });
+  await db.run(`DELETE FROM compliance_rules WHERE id = ?`, [req.params.id]);
+  await recordAudit({ adminId: req.user.id, action: "rule_deleted", detail: `Rule ${existing.code} (id ${existing.id})` });
+  res.json({ ok: true });
+});
+
 /* ---------------------------------------------------------
    WEBSITE CONTENT
 -------------------------------------------------------- */
