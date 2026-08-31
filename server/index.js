@@ -712,7 +712,11 @@ app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
 
 export async function initDb() {
   await db.init();
-  await seedAdmin();
+  try {
+    await seedAdmin();
+  } catch (err) {
+    console.error("[db] seedAdmin failed:", err.message);
+  }
 }
 
 async function seedAdmin() {
@@ -728,7 +732,7 @@ async function seedAdmin() {
        status = 'active'`,
     ["PackPure Administrator", email, "+1 000 000 0000", hash, "PackPure"]
   );
-  console.log(`Seed: admin ready -> ${email}`);
+  console.log(`Seed: admin ready -> ${email} (id=${id})`);
 }
 
 export default app;

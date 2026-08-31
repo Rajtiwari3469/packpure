@@ -67,6 +67,9 @@ export async function insert(sqlText, params = []) {
   const result = await sql.query(finalSql, p);
   const rows = result && result.rows ? result.rows : Array.isArray(result) ? result : [];
   const row = rows.length ? rows[0] : null;
+  if (!row) {
+    console.error("[db] insert returned no row; result=", JSON.stringify(result && result.fields));
+  }
   return row ? Number(row.id) : null;
 }
 
