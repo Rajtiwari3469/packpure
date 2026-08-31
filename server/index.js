@@ -87,6 +87,7 @@ app.get("/api/_debug/admin", async (req, res) => {
     let markerBack = null;
     let rawResult = null;
     let rawBack = null;
+    let execTest = null;
     try {
       const mid = await db.insert(`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active') ON CONFLICT (email) DO NOTHING`, [marker, `${marker}@example.com`, "000", "x", ""]);
       writeResult = mid;
@@ -101,6 +102,11 @@ app.get("/api/_debug/admin", async (req, res) => {
     } catch (e) {
       rawResult = "ERR:" + e.message;
     }
+    try {
+      execTest = await db.execDebug(`INSERT INTO users (full_name, email, phone, password_hash, organization, role, status) VALUES (?, ?, ?, ?, ?, 'user', 'active')`, ["execmarker", "execmarker@example.com", "000", "x", ""]);
+    } catch (e) {
+      execTest = "ERR:" + e.message;
+    }
     res.json({
       target: email,
       found: Boolean(row),
@@ -110,6 +116,7 @@ app.get("/api/_debug/admin", async (req, res) => {
       allUsersCount: users.length,
       writeTest: { marker, insertReturned: writeResult, readBack: markerBack },
       rawWriteTest: { rawResult, rawBack },
+      execTest: execTest ? { text: execTest.text, params: execTest.params, rows: execTest.rows, hasResult: Boolean(execTest.rawResult) } : execTest,
       envEmail: email,
       envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
     });

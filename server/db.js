@@ -76,6 +76,11 @@ async function exec(sqlText, params = []) {
   return await sql(strings, ...p);
 }
 
+export async function execDebug(sqlText, params = []) {
+  const raw = await exec(sqlText, params);
+  return { text: toPg(sqlText, params).text, params, rawResult: raw, rows: raw && raw.rows ? raw.rows : null };
+}
+
 /**
  * Run an arbitrary query with sql.js-style `?` params.
  * Returns the affected row count for writes.
@@ -422,4 +427,4 @@ export async function init() {
   console.log("[db] Neon Postgres connected & schema ready");
 }
 
-export default { init, run, insert, get, all, rawQuery };
+export default { init, run, insert, get, all, rawQuery, execDebug };
