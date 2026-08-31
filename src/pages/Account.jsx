@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { showSuccess, showError, showInfo } from "../notify.jsx";
 import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
@@ -221,6 +221,19 @@ export default function Account() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="pp-account-block">
+          <div className="pp-account-block-head">
+            <h3>Prefer to try it?</h3>
+          </div>
+          <p className="pp-account-danger-text">
+            You can also explore the platform for yourself — head to the
+            scanner or the How It Works guide.
+          </p>
+          <Link to="/scanner" className="pp-btn pp-btn-primary">
+            Open Scanner
+          </Link>
         </div>
 
         <div className="pp-account-block pp-account-danger">

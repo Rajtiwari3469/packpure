@@ -169,16 +169,12 @@ export default function Help() {
       </section>
 
       <section className="pp-cta">
-        <h2>Prefer to try it?</h2>
+        <h2>Want to learn more?</h2>
         <p>
-          You can also explore the platform for yourself — head to the scanner
-          or the How It Works guide.
+          See how PackPure works from label to compliance report.
         </p>
         <div className="pp-hero-actions">
-          <Link to="/scanner" className="pp-btn pp-btn-primary pp-btn-lg">
-            Open Scanner
-          </Link>
-          <Link to="/how-it-works" className="pp-btn pp-btn-ghost pp-btn-lg">
+          <Link to="/how-it-works" className="pp-btn pp-btn-primary pp-btn-lg">
             How It Works
           </Link>
         </div>
