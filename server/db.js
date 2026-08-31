@@ -282,7 +282,8 @@ async function seedDefaults() {
     for (const r of rules) {
       await insert(
         `INSERT INTO compliance_rules (code, name, description, severity, enabled, created_by)
-         VALUES (?, ?, ?, ?, 1, NULL)`,
+         VALUES (?, ?, ?, ?, 1, NULL)
+         ON CONFLICT (code) DO NOTHING`,
         r
       );
     }
@@ -320,17 +321,12 @@ async function seedDefaults() {
     ["legal", "last_updated", "", "published"],
   ];
   for (const [section, key, value, status] of defaults) {
-    const existing = await get(
-      `SELECT id FROM website_content WHERE section = ? AND key = ?`,
-      [section, key]
+    await insert(
+      `INSERT INTO website_content (section, key, value, status)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT (section, key) DO UPDATE SET value = EXCLUDED.value, status = EXCLUDED.status`,
+      [section, key, value, status]
     );
-    if (!existing) {
-      await insert(
-        `INSERT INTO website_content (section, key, value, status)
-         VALUES (?, ?, ?, ?)`,
-        [section, key, value, status]
-      );
-    }
   }
 
   const featCount = await get(
@@ -349,17 +345,20 @@ async function seedDefaults() {
     for (const [icon, title, text] of homeFeatures) {
       await insert(
         `INSERT INTO website_content (section, key, value, status)
-         VALUES ('features', ?, ?, 'published')`,
+         VALUES ('features', ?, ?, 'published')
+         ON CONFLICT (section, key) DO NOTHING`,
         [`f${idx}_icon`, icon]
       );
       await insert(
         `INSERT INTO website_content (section, key, value, status)
-         VALUES ('features', ?, ?, 'published')`,
+         VALUES ('features', ?, ?, 'published')
+         ON CONFLICT (section, key) DO NOTHING`,
         [`f${idx}_title`, title]
       );
       await insert(
         `INSERT INTO website_content (section, key, value, status)
-         VALUES ('features', ?, ?, 'published')`,
+         VALUES ('features', ?, ?, 'published')
+         ON CONFLICT (section, key) DO NOTHING`,
         [`f${idx}_text`, text]
       );
       idx++;
@@ -377,7 +376,11 @@ export async function init() {
   if (initialized) return;
   if (!sql) throw new Error("NEON_DATABASE_URL environment variable is not set.");
   await migrate();
-  await seedDefaults();
+  try {
+    await seedDefaults();
+  } catch (err) {
+    console.warn("[db] seedDefaults warning (non-fatal):", err.message);
+  }
   initialized = true;
   console.log("[db] Neon Postgres connected & schema ready");
 }

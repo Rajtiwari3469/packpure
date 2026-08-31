@@ -710,18 +710,21 @@ export async function initDb() {
 }
 
 async function seedAdmin() {
-  const existing = await db.get(`SELECT id FROM users WHERE role IN ('admin','super_admin') LIMIT 1`);
-  if (existing) return;
   const email = process.env.ADMIN_EMAIL || "admin@packpure.com";
   const pass = process.env.ADMIN_PASSWORD || "Admin@12345";
   const hash = await hashPassword(pass);
   const id = await db.insert(
     `INSERT INTO users (full_name, email, phone, password_hash, organization, role, status)
-     VALUES (?, ?, ?, ?, ?, 'super_admin', 'active')`,
+     VALUES (?, ?, ?, ?, ?, 'super_admin', 'active')
+     ON CONFLICT (email) DO NOTHING`,
     ["PackPure Administrator", email, "+1 000 000 0000", hash, "PackPure"]
   );
-  await recordAudit({ adminId: id, action: "admin_seeded", category: "security", detail: `Super admin account created (${email})` });
-  console.log(`Seed: super admin created -> ${email}`);
+  if (id) {
+    await recordAudit({ adminId: id, action: "admin_seeded", category: "security", detail: `Super admin account created (${email})` });
+    console.log(`Seed: super admin created -> ${email}`);
+  } else {
+    console.log(`Seed: admin already exists -> ${email}`);
+  }
 }
 
 export default app;
