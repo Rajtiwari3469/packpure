@@ -49,8 +49,8 @@ function toPg(sqlText, params) {
  */
 export async function run(sqlText, params = []) {
   const { text, params: p } = toPg(sqlText, params);
-  const result = await sql(text, ...p);
-  return { rowCount: result ? result.length : 0 };
+  const result = await sql.query(text, p);
+  return { rowCount: result ? result.rows.length : 0 };
 }
 
 /**
@@ -62,24 +62,24 @@ export async function insert(sqlText, params = []) {
   // Convert placeholders & datetime in the INSERT portion
   const { text: convText, params: p } = toPg(text, params);
   const finalSql = `${convText} RETURNING id`;
-  const result = await sql(finalSql, ...p);
-  const row = Array.isArray(result) ? result[0] : null;
+  const result = await sql.query(finalSql, p);
+  const row = result && result.rows && result.rows.length ? result.rows[0] : null;
   return row ? Number(row.id) : null;
 }
 
 /** Return the first row (object) or null. */
 export async function get(sqlText, params = []) {
   const { text, params: p } = toPg(sqlText, params);
-  const result = await sql(text, ...p);
-  const rows = Array.isArray(result) ? result : [];
+  const result = await sql.query(text, p);
+  const rows = result && result.rows ? result.rows : [];
   return rows.length ? rows[0] : null;
 }
 
 /** Return all rows as an array of objects. */
 export async function all(sqlText, params = []) {
   const { text, params: p } = toPg(sqlText, params);
-  const result = await sql(text, ...p);
-  return Array.isArray(result) ? result : [];
+  const result = await sql.query(text, p);
+  return result && result.rows ? result.rows : [];
 }
 
 /* =========================================================
