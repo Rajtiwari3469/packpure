@@ -2607,6 +2607,41 @@ input:focus-visible {
   border-color: var(--accent);
 }
 
+.pp-pwd-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pp-pwd-wrap input {
+  padding-right: 42px;
+}
+
+.pp-pwd-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.pp-pwd-toggle:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .pp-field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

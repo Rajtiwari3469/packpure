@@ -623,18 +623,28 @@
 }
 .adm-pwd input {
   width: 100%;
+  padding-right: 40px;
 }
 .adm-pwd-toggle {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
   background: none;
   border: none;
+  border-radius: 8px;
   color: var(--adm-g);
-  font-size: 12px;
   cursor: pointer;
-  font-weight: 600;
+}
+.adm-pwd-toggle:hover {
+  color: var(--adm-blue);
+  background: var(--adm-border);
 }
 .adm-field-head {
   display: flex;

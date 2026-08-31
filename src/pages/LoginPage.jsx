@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { showSuccess, showError } from "../notify.jsx";
 import { useAuth } from "../auth.jsx";
+import PasswordField from "../components/PasswordField.jsx";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -84,18 +85,14 @@ export default function LoginPage() {
             />
           </div>
 
-          <div className="pp-field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Your password"
-              value={form.password}
-              onChange={handleChange}
-            />
-          </div>
+          <PasswordField
+            id="password"
+            label="Password"
+            autoComplete="current-password"
+            placeholder="Your password"
+            value={form.password}
+            onChange={handleChange}
+          />
 
           <button
             type="submit"

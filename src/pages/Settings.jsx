@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { showSecurity, showError } from "../notify.jsx";
 import { api } from "../api.js";
+import PasswordField from "../components/PasswordField.jsx";
 
 export default function Settings() {
   const [form, setForm] = useState({
@@ -71,44 +72,32 @@ export default function Settings() {
         {error && <div className="pp-form-error">{error}</div>}
 
         <form className="pp-form" onSubmit={handleSubmit}>
-          <div className="pp-field">
-            <label htmlFor="currentPassword">Current Password</label>
-            <input
-              id="currentPassword"
-              name="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Your current password"
-              value={form.currentPassword}
-              onChange={handleChange}
-            />
-          </div>
+          <PasswordField
+            id="currentPassword"
+            label="Current Password"
+            autoComplete="current-password"
+            placeholder="Your current password"
+            value={form.currentPassword}
+            onChange={handleChange}
+          />
 
-          <div className="pp-field">
-            <label htmlFor="newPassword">New Password</label>
-            <input
-              id="newPassword"
-              name="newPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="At least 6 characters"
-              value={form.newPassword}
-              onChange={handleChange}
-            />
-          </div>
+          <PasswordField
+            id="newPassword"
+            label="New Password"
+            autoComplete="new-password"
+            placeholder="At least 6 characters"
+            value={form.newPassword}
+            onChange={handleChange}
+          />
 
-          <div className="pp-field">
-            <label htmlFor="confirmPassword">Confirm New Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Repeat your new password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-            />
-          </div>
+          <PasswordField
+            id="confirmPassword"
+            label="Confirm New Password"
+            autoComplete="new-password"
+            placeholder="Repeat your new password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+          />
 
           <button
             type="submit"

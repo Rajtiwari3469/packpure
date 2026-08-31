@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { showSuccess, showError } from "../notify.jsx";
 import { useAuth } from "../auth.jsx";
+import PasswordField from "../components/PasswordField.jsx";
 
 export default function SignupPage() {
   const { signup } = useAuth();
@@ -167,31 +168,23 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="pp-field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="At least 6 characters"
-              value={form.password}
-              onChange={handleChange}
-            />
-          </div>
+          <PasswordField
+            id="password"
+            label="Password"
+            autoComplete="new-password"
+            placeholder="At least 6 characters"
+            value={form.password}
+            onChange={handleChange}
+          />
 
-          <div className="pp-field">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Repeat your password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-            />
-          </div>
+          <PasswordField
+            id="confirmPassword"
+            label="Confirm Password"
+            autoComplete="new-password"
+            placeholder="Repeat your password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+          />
 
           <button
             type="submit"
