@@ -2857,6 +2857,38 @@ input:focus-visible {
   }
 }
 
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .pp-navbar-inner {
+    gap: 12px;
+    padding: 0 16px;
+  }
+  .pp-nav-link {
+    padding: 9px 10px;
+    font-size: 13.5px;
+  }
+  .pp-nav {
+    gap: 2px;
+  }
+  .pp-nav-right {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .pp-nav {
+    display: none;
+  }
+  .pp-hamburger {
+    display: flex;
+  }
+  .pp-mobile-menu {
+    display: block;
+  }
+  .pp-user-name {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .pp-nav {
     display: none;
