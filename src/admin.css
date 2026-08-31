@@ -602,7 +602,7 @@
   border: 1px solid var(--adm-border);
   border-radius: 9px;
   font-size: 14px;
-  background: #fff;
+  background: var(--adm-card);
   color: var(--adm-text);
 }
 .adm-field textarea {
@@ -705,7 +705,7 @@
 }
 .adm-input,
 .adm-select {
-  background: #fff;
+  background: var(--adm-card);
 }
 .adm-muted {
   color: var(--adm-muted);
@@ -879,7 +879,7 @@
   border: 1px solid var(--adm-border);
   border-radius: 10px;
   margin-bottom: 10px;
-  background: #fff;
+  background: var(--adm-card);
 }
 .adm-notif-list li.read {
   opacity: 0.6;
@@ -1428,7 +1428,7 @@
   z-index: 100;
 }
 .adm-modal {
-  background: #fff;
+  background: var(--adm-card);
   border-radius: 14px;
   max-width: 420px;
   width: 100%;
@@ -1602,6 +1602,33 @@
 }
 [data-theme="dark"] .adm-theme-toggle:hover {
   background: #26324a;
+}
+
+/* ---------- Dark-mode visibility fixes for light pastels ---------- */
+[data-theme="dark"] .adm-ton-teal { background: rgba(45, 212, 191, 0.16); }
+[data-theme="dark"] .adm-ton-blue { background: rgba(59, 130, 246, 0.16); }
+[data-theme="dark"] .adm-ton-green { background: rgba(34, 197, 94, 0.16); }
+[data-theme="dark"] .adm-ton-red { background: rgba(248, 113, 113, 0.16); }
+[data-theme="dark"] .adm-ton-amber { background: rgba(251, 191, 36, 0.16); }
+[data-theme="dark"] .adm-ton-violet { background: rgba(167, 139, 250, 0.16); }
+[data-theme="dark"] .adm-badge-inline { background: rgba(34, 197, 94, 0.18); color: #4ade80; }
+[data-theme="dark"] .adm-topbar-search input { background: var(--adm-card); }
+[data-theme="dark"] .adm-notif-list li { background: var(--adm-card); }
+[data-theme="dark"] .adm-sev-medium { background: rgba(251, 191, 36, 0.18); color: #fbbf24; }
+[data-theme="dark"] .adm-card,
+[data-theme="dark"] .adm-stat-card,
+[data-theme="dark"] .adm-stat-tile {
+  background: var(--adm-card);
+}
+
+/* ---------- Distinct layering for the light theme ---------- */
+.adm-sidebar {
+  background: var(--adm-sidebar);
+  color: #fff;
+}
+[data-theme="dark"] .adm-topbar {
+  background: var(--adm-card);
+  border-bottom-color: var(--adm-border);
 }
 
 .adm-logout-btn {
