@@ -37,7 +37,7 @@ import "./App.css";
 function Layout({ children }) {
   const { get } = useSite();
   const siteName = get("branding", "site_name", "PackPure");
-  const siteTitle = get("branding", "site_title", "Pack Pure AI | Legal Metrology Compliance System");
+  const siteTitle = get("branding", "site_title", "PackPure");
   const footerText = get("footer", "text", "AI-Assisted Legal Pack Pure Compliance · 2026");
   const copyright = get("footer", "copyright", `© ${new Date().getFullYear()} ${siteName}. All rights reserved.`);
   useEffect(() => {
