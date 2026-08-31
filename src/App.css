@@ -1954,6 +1954,30 @@ input:focus-visible {
   background: var(--danger-bg);
 }
 
+.pp-delete-btn {
+  background: var(--danger-solid);
+  color: #fff;
+  border-color: transparent;
+}
+
+.pp-delete-btn:hover {
+  background: var(--danger-solid);
+  filter: brightness(0.92);
+}
+
+.pp-delete-warning {
+  margin: 14px 0;
+  padding: 12px 14px;
+
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--danger-solid);
+
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  border-radius: 10px;
+}
+
 .pp-share-btn {
   display: inline-flex;
   align-items: center;

@@ -14,7 +14,7 @@ export default function Account() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deletePw, setDeletePw] = useState("");
+  const [deleteName, setDeleteName] = useState("");
   const [deleteErr, setDeleteErr] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -73,13 +73,18 @@ export default function Account() {
   const handleDelete = async (e) => {
     e.preventDefault();
     setDeleteErr("");
-    if (!deletePw) {
-      setDeleteErr("Please enter your password to confirm.");
+    const typed = (deleteName || "").trim();
+    if (!typed) {
+      setDeleteErr("Please type your profile name to confirm.");
+      return;
+    }
+    if (typed !== (user?.fullName || "").trim()) {
+      setDeleteErr("The name you entered does not match your profile name.");
       return;
     }
     setDeleting(true);
     try {
-      await api.deleteAccount({ password: deletePw });
+      await api.deleteAccount({ name: typed });
       await logout();
       setConfirmOpen(false);
       showSuccess(
@@ -89,8 +94,8 @@ export default function Account() {
       navigate("/", { replace: true });
     } catch (err) {
       setDeleteErr(
-        err.message === "Incorrect password. Your account was not deleted."
-          ? "Incorrect password. Please try again."
+        err.message === "Incorrect name. Your account was not deleted."
+          ? "The name you entered does not match your profile name."
           : err.message || "Could not delete your account."
       );
     } finally {
@@ -272,14 +277,14 @@ export default function Account() {
             This action cannot be undone.
           </p>
           <button
-            className="pp-btn pp-btn-danger"
+            className="pp-btn pp-delete-btn"
             onClick={() => {
               setDeleteErr("");
-              setDeletePw("");
+              setDeleteName("");
               setConfirmOpen(true);
             }}
           >
-            Delete Account
+            Delete Permanently
           </button>
         </div>
       </section>
@@ -288,7 +293,7 @@ export default function Account() {
         <div className="pp-modal-overlay" onClick={() => !deleting && setConfirmOpen(false)}>
           <div className="pp-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <div className="pp-modal-head">
-              <h3>Delete Account</h3>
+              <h3>Delete your account?</h3>
               <button
                 className="pp-modal-close"
                 aria-label="Close"
@@ -298,19 +303,26 @@ export default function Account() {
               </button>
             </div>
             <p className="pp-modal-text">
-              This will permanently delete <strong>{user.email}</strong> and
-              all scan history. This action cannot be undone.
+              This action <strong>cannot be undone</strong>. This will
+              permanently delete the account{" "}
+              <strong>{user.email}</strong> and all of its scan history.
             </p>
+            <div className="pp-delete-warning">
+              ⚠ Permanently deleting your account will remove all your scans,
+              requests, and personal data. There is no way to recover them.
+            </div>
             <form className="pp-form" onSubmit={handleDelete}>
               <div className="pp-field">
-                <label htmlFor="deletePassword">Enter your password to confirm</label>
+                <label htmlFor="deleteName">
+                  Please type <strong>{user.fullName}</strong> to confirm
+                </label>
                 <input
-                  id="deletePassword"
-                  type="password"
-                  placeholder="Your password"
-                  value={deletePw}
+                  id="deleteName"
+                  type="text"
+                  placeholder={user.fullName}
+                  value={deleteName}
                   onChange={(e) => {
-                    setDeletePw(e.target.value);
+                    setDeleteName(e.target.value);
                     setDeleteErr("");
                   }}
                   autoFocus
@@ -327,10 +339,10 @@ export default function Account() {
                 </button>
                 <button
                   type="submit"
-                  className="pp-btn pp-btn-danger"
+                  className="pp-btn pp-delete-btn"
                   disabled={deleting}
                 >
-                  {deleting ? "Deleting…" : "Delete My Account"}
+                  {deleting ? "Deleting…" : "Delete permanently"}
                 </button>
               </div>
             </form>
