@@ -44,6 +44,10 @@ export default function SignupPage() {
       setError("Please enter a valid phone number.");
       return;
     }
+    if (!form.age || Number(form.age) < 1 || Number(form.age) > 150) {
+      setError("Please enter a valid age.");
+      return;
+    }
     if (form.password.length < 6) {
       setError("Password must be at least 6 characters.");
       return;
@@ -148,11 +152,12 @@ export default function SignupPage() {
             </div>
 
             <div className="pp-field">
-              <label htmlFor="age">Age (optional)</label>
+              <label htmlFor="age">Age</label>
               <input
                 id="age"
                 name="age"
                 type="number"
+                required
                 min="1"
                 max="150"
                 placeholder="Age"

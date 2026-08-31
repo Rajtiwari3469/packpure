@@ -132,6 +132,9 @@ app.post("/api/auth/signup", async (req, res) => {
       .status(400)
       .json({ error: "A valid phone number is required." });
   }
+  if (age === undefined || age === null || age === "" || Number(age) < 1 || Number(age) > 150) {
+    return res.status(400).json({ error: "A valid age is required." });
+  }
   if (!password || String(password).length < 6) {
     return res
       .status(400)
