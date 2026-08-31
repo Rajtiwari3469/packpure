@@ -280,6 +280,13 @@ export default function AdminLayout() {
               {theme === "dark" ? "☀" : "☾"}
             </button>
             <AdminBell badgeCount={badges ? badges.alerts : 0} />
+            <button
+              className="adm-logout-btn"
+              onClick={handleLogout}
+              title="Log out"
+            >
+              Logout
+            </button>
             <div className="adm-user-menu-wrap">
               <button
                 className="adm-user-chip"
