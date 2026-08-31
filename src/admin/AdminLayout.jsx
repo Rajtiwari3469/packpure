@@ -184,6 +184,7 @@ export default function AdminLayout() {
   const [badges, setBadges] = useState(null);
   const [primaryColor, setPrimaryColor] = useState("#1b7a43");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const navigate = useNavigate();
   const timerRef = useRef(null);
@@ -231,11 +232,19 @@ export default function AdminLayout() {
   }
 
   return (
-    <div className="adm-root" ref={rootRef}>
+    <div className={`adm-root${collapsed ? " adm-collapsed" : ""}`} ref={rootRef}>
       <aside className={`adm-sidebar${drawerOpen ? " open" : ""}`}>
         <div className="adm-brand">
           <span className="adm-brand-mark">PP</span>
           <span className="adm-brand-text">PackPure<span>Admin</span></span>
+          <button
+            className="adm-collapse-btn"
+            onClick={() => setCollapsed((v) => !v)}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={collapsed ? "Expand" : "Collapse"}
+          >
+            {collapsed ? "»" : "«"}
+          </button>
         </div>
         <SideContent badges={badges} onNavigate={() => setDrawerOpen(false)} />
         <div className="adm-side-foot">

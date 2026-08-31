@@ -1456,6 +1456,94 @@
   display: none;
 }
 
+/* ---------------- Collapsible sidebar (icon rail) ---------------- */
+.adm-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border: 1px solid #ffffff30;
+  border-radius: 7px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.adm-collapse-btn:hover {
+  background: #ffffff1f;
+}
+
+@media (min-width: 768px) {
+  .adm-root.adm-collapsed .adm-sidebar {
+    width: 72px;
+    transition: width 0.2s ease;
+  }
+
+  .adm-root.adm-collapsed .adm-brand {
+    padding: 18px 12px;
+    justify-content: center;
+    position: relative;
+  }
+
+  .adm-root.adm-collapsed .adm-brand-text {
+    display: none;
+  }
+
+  .adm-root.adm-collapsed .adm-collapse-btn {
+    position: absolute;
+    top: 18px;
+    right: -11px;
+    z-index: 5;
+    margin: 0;
+    background: var(--adm-g);
+    border-color: var(--adm-g);
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .adm-root.adm-collapsed .adm-nav {
+    padding: 8px;
+  }
+
+  .adm-root.adm-collapsed .adm-nav-item {
+    justify-content: center;
+    padding: 11px;
+    gap: 0;
+  }
+
+  .adm-root.adm-collapsed .adm-nav-label,
+  .adm-root.adm-collapsed .adm-side-foot .adm-nav-label {
+    display: none;
+  }
+
+  .adm-root.adm-collapsed .adm-nav-icon {
+    width: auto;
+  }
+
+  .adm-root.adm-collapsed .adm-nav-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 15px;
+    height: 15px;
+    font-size: 9px;
+    padding: 0 3px;
+    border-radius: 8px;
+  }
+
+  .adm-root.adm-collapsed .adm-side-foot {
+    padding: 8px;
+  }
+}
+
 /* ---------------- Responsive ---------------- */
 @media (max-width: 1024px) {
   .adm-stats-grid { grid-template-columns: repeat(2, 1fr); }
