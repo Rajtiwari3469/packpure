@@ -30,6 +30,23 @@ export default function Dashboard() {
 
   const firstName = user?.fullName?.split(" ")[0] || "there";
 
+  const indiaHour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: "Asia/Kolkata",
+    }).format(new Date())
+  );
+
+  const greeting =
+    indiaHour >= 5 && indiaHour < 12
+      ? { text: "Good Morning", emoji: "🌅" }
+      : indiaHour >= 12 && indiaHour < 17
+      ? { text: "Good Afternoon", emoji: "☀️" }
+      : indiaHour >= 17 && indiaHour < 21
+      ? { text: "Good Evening", emoji: "🌆" }
+      : { text: "Good Night", emoji: "🌙" };
+
   const renderEmpty = (
     <div className="pp-empty">
       <span className="pp-empty-icon">◇</span>
@@ -49,7 +66,7 @@ export default function Dashboard() {
       <section className="pp-page-hero pp-dash-hero">
         <span className="pp-eyebrow">DASHBOARD</span>
         <h1>
-          Hello, {firstName} 👋
+          {greeting.text}, {firstName} {greeting.emoji}
         </h1>
         <p>Welcome back to PackPure.</p>
         <div className="pp-dash-hero-action">
