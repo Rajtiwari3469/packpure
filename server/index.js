@@ -79,13 +79,17 @@ app.get("/api/_debug/admin", async (req, res) => {
   try {
     const email = process.env.ADMIN_EMAIL || "admin@packpure.com";
     const row = await db.get(`SELECT id, email, role, status, password_hash FROM users WHERE lower(email) = lower(?)`, [email]);
-    if (!row) return res.json({ email, found: false });
-    const expectedPass = process.env.ADMIN_PASSWORD || "Admin@12345";
-    const matches = await comparePassword(expectedPass, row.password_hash);
+    const admins = await db.all(`SELECT id, email, role, status FROM users WHERE role IN ('admin','super_admin')`);
+    const users = await db.all(`SELECT id, email, role FROM users ORDER BY id`);
     res.json({
-      email: row.email, role: row.role, status: row.status, found: true,
-      passwordMatchesExpected: matches,
-      envEmail: email, envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
+      target: email,
+      found: Boolean(row),
+      row: row ? { id: row.id, email: row.email, role: row.role, status: row.status } : null,
+      passwordMatches: row ? await comparePassword(process.env.ADMIN_PASSWORD || "Admin@12345", row.password_hash) : null,
+      allAdmins: admins,
+      allUsers: users,
+      envEmail: email,
+      envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
