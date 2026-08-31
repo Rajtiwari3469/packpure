@@ -198,12 +198,16 @@ router.get("/users", requireAdmin, async (req, res) => {
   res.json({ users });
 });
 
-router.get("/users/tree", requireAdmin, async (req, res) => {
+ router.get("/users/tree", requireAdmin, async (req, res) => {
   const rows = await db.all(`SELECT u.* FROM users u ORDER BY u.created_at DESC`);
   const tree = {};
   rows.forEach((r) => {
-    const d = new Date(String(r.created_at).replace(" ", "T"));
-    if (isNaN(d.getTime())) return;
+    const ts = String(r.created_at || "").trim();
+    const norm = ts.replace(" ", "T")
+      .replace(/([+-]\d{2})(\d{2})$/, "$1:$2")
+      .replace(/([+-]\d{2})$/, "$1:00");
+    const d = new Date(norm);
+    if (!ts || isNaN(d.getTime())) return;
     const year = d.getFullYear();
     const month = d.toLocaleString("en-US", { month: "long" });
     const dateKey = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
