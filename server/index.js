@@ -75,6 +75,23 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/api/_debug/admin", async (req, res) => {
+  try {
+    const email = process.env.ADMIN_EMAIL || "admin@packpure.com";
+    const row = await db.get(`SELECT id, email, role, status, password_hash FROM users WHERE lower(email) = lower(?)`, [email]);
+    if (!row) return res.json({ email, found: false });
+    const expectedPass = process.env.ADMIN_PASSWORD || "Admin@12345";
+    const matches = await comparePassword(expectedPass, row.password_hash);
+    res.json({
+      email: row.email, role: row.role, status: row.status, found: true,
+      passwordMatchesExpected: matches,
+      envEmail: email, envHasPassword: Boolean(process.env.ADMIN_PASSWORD),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /* ---------------------------------------------------------
    ADMIN ROUTES
 -------------------------------------------------------- */
