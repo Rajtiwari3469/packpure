@@ -1,5 +1,7 @@
 import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
+import pg from "pg";
+
+const { Pool } = pg;
 
 const DATABASE_URL =
   process.env.NEON_DATABASE_URL ||
@@ -9,11 +11,22 @@ if (!DATABASE_URL) {
   console.error("Missing NEON_DATABASE_URL (see .env.example)");
 }
 
-const sql = DATABASE_URL ? neon(DATABASE_URL) : null;
+// pg (node-postgres) uses a real Postgres wire connection, which persists
+// writes/reliably reads on Neon. The @neondatabase/serverless HTTP driver was
+// silently dropping writes/reads on this pooled endpoint, so we use pg.
+function buildPool(url) {
+  let conn = url;
+  // pg 8+ understands sslmode=require from the URL, but not Neon's
+  // channel_binding option; strip it to avoid connection errors.
+  conn = conn.replace(/&?channel_binding=require/, "");
+  return new Pool({ connectionString: conn, ssl: { rejectUnauthorized: false }, max: 3 });
+}
+
+const pool = DATABASE_URL ? buildPool(DATABASE_URL) : null;
 
 /**
  * Convert SQLite-style SQL to Postgres:
- *   - `?` placeholders  -> `$1`, `$2`, ...  (neon uses tagged template)
+ *   - `?` placeholders  -> `$1`, `$2`, ...
  *   - `datetime('now')` -> `now()`
  *   - `datetime('now', '-N unit')` -> `now() - interval 'N unit'`
  *
@@ -46,82 +59,56 @@ function toPg(sqlText, params) {
   };
 }
 
-/**
- * Execute a query using the neon *tagged-template* code path.
- *
- * IMPORTANT: on this Neon pooled/HTTP connection, `sql.query(text, params)`
- * silently fails to persist writes and returns empty reads, while the
- * `sql\`...\`` tagged-template path works correctly (verified empirically).
- * So every statement is built as a tag invocation.
- *
- * We split the (already ? -> $n converted) SQL text on its $1..$n markers
- * into string pieces and spread the bound values as interpolation args,
- * exactly mimicking what the JS tagged-template runtime does.
- */
-async function exec(sqlText, params = []) {
-  const { text: t, params: p } = toPg(sqlText, params);
-
-  const pieces = [];
-  let last = 0;
-  for (let i = 0; i < p.length; i++) {
-    const marker = `$${i + 1}`;
-    const pos = t.indexOf(marker);
-    pieces.push(t.slice(last, pos));
-    last = pos + marker.length;
-  }
-  pieces.push(t.slice(last));
-
-  const strings = pieces;
-  Object.defineProperty(strings, "raw", { value: [...pieces] });
-  return await sql(strings, ...p);
+/** Run a query on the pool. */
+async function q(sqlText, params = []) {
+  const { text, params: p } = toPg(sqlText, params);
+  return pool.query(text, p);
 }
 
-export async function execDebug(sqlText, params = []) {
-  const raw = await exec(sqlText, params);
-  return { text: toPg(sqlText, params).text, params, rawResult: raw, rows: raw && raw.rows ? raw.rows : null };
-}
-
-/**
- * Run an arbitrary query with sql.js-style `?` params.
- * Returns the affected row count for writes.
- */
+/** Run an arbitrary query with sql.js-style `?` params. */
 export async function run(sqlText, params = []) {
-  const result = await exec(sqlText, params);
-  const rows = result && result.rows ? result.rows : [];
-  return { rowCount: rows.length };
+  const res = await q(sqlText, params);
+  return { rowCount: res.rowCount || 0 };
 }
 
-/**
- * Run an INSERT and return the new row id.
- * Appends ` RETURNING id` to capture the generated key.
- */
+/** Run an INSERT and return the new row id. */
 export async function insert(sqlText, params = []) {
   let text = String(sqlText).trim().replace(/;\s*$/, "");
-  const result = await exec(`${text} RETURNING id`, params);
-  const rows = result && result.rows ? result.rows : [];
-  const row = rows.length ? rows[0] : null;
+  const res = await q(`${text} RETURNING id`, params);
+  const row = res.rows && res.rows[0];
   if (!row) {
     console.error("[db] insert returned no row");
+    return null;
   }
-  return row ? Number(row.id) : null;
+  return Number(row.id);
 }
 
 /** Return the first row (object) or null. */
 export async function get(sqlText, params = []) {
-  const result = await exec(sqlText, params);
-  const rows = result && result.rows ? result.rows : [];
-  return rows.length ? rows[0] : null;
+  const res = await q(sqlText, params);
+  return res.rows && res.rows.length ? res.rows[0] : null;
 }
 
 /** Return all rows as an array of objects. */
 export async function all(sqlText, params = []) {
-  const result = await exec(sqlText, params);
-  return result && result.rows ? result.rows : [];
+  const res = await q(sqlText, params);
+  return res.rows || [];
 }
 
 /** Exposed for diagnostics: run using tagged-template (non-query) path. */
 export async function rawQuery(fn) {
-  return fn(sql);
+  return fn({ query: (t, p) => pool.query(t, p) });
+}
+
+/** Diagnostics: execute a query and return the raw result. */
+export async function execDebug(sqlText, params = []) {
+  const res = await q(sqlText, params);
+  return {
+    text: toPg(sqlText, params).text,
+    params,
+    hasResult: Boolean(res),
+    rows: res.rows || null,
+  };
 }
 
 /* =========================================================
@@ -129,7 +116,8 @@ export async function rawQuery(fn) {
 ========================================================= */
 
 async function migrate() {
-  await sql`
+  if (!pool) return;
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       full_name TEXT NOT NULL,
@@ -142,8 +130,8 @@ async function migrate() {
       status TEXT NOT NULL DEFAULT 'active',
       created_at TEXT NOT NULL DEFAULT now()
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS sessions (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       token TEXT NOT NULL UNIQUE,
@@ -152,8 +140,8 @@ async function migrate() {
       expires_at TEXT NOT NULL,
       CONSTRAINT fk_sessions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS scans (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       user_id BIGINT NOT NULL,
@@ -165,8 +153,8 @@ async function migrate() {
       created_at TEXT NOT NULL DEFAULT now(),
       CONSTRAINT fk_scans_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS contact_messages (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       user_id BIGINT,
@@ -178,16 +166,16 @@ async function migrate() {
       created_at TEXT NOT NULL DEFAULT now(),
       CONSTRAINT fk_cm_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS user_logins (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       user_id BIGINT NOT NULL,
       created_at TEXT NOT NULL DEFAULT now(),
       CONSTRAINT fk_ul_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS user_activities (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       user_id BIGINT,
@@ -197,8 +185,8 @@ async function migrate() {
       created_at TEXT NOT NULL DEFAULT now(),
       CONSTRAINT fk_ua_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS compliance_rules (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       code TEXT NOT NULL UNIQUE,
@@ -213,8 +201,8 @@ async function migrate() {
       created_at TEXT NOT NULL DEFAULT now(),
       updated_at TEXT NOT NULL DEFAULT now()
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS website_content (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       section TEXT NOT NULL,
@@ -227,8 +215,8 @@ async function migrate() {
       updated_at TEXT NOT NULL DEFAULT now(),
       UNIQUE (section, key)
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS website_content_versions (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       section TEXT NOT NULL,
@@ -238,8 +226,8 @@ async function migrate() {
       changed_by BIGINT,
       created_at TEXT NOT NULL DEFAULT now()
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS announcements (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       title TEXT NOT NULL DEFAULT '',
@@ -251,8 +239,8 @@ async function migrate() {
       created_by BIGINT,
       created_at TEXT NOT NULL DEFAULT now()
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS admin_notifications (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       user_id BIGINT,
@@ -265,8 +253,8 @@ async function migrate() {
       link_id BIGINT,
       created_at TEXT NOT NULL DEFAULT now()
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS user_notifications (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       user_id BIGINT NOT NULL,
@@ -285,8 +273,8 @@ async function migrate() {
       updated_at TEXT NOT NULL DEFAULT now(),
       CONSTRAINT fk_un_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
-  `;
-  await sql`
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS audit_logs (
       id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
       admin_id BIGINT,
@@ -296,11 +284,11 @@ async function migrate() {
       created_at TEXT NOT NULL DEFAULT now(),
       CONSTRAINT fk_al_admin FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE SET NULL
     )
-  `;
+  `);
 
-  await sql`CREATE INDEX IF NOT EXISTS idx_user_notif_user ON user_notifications(user_id)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_admin_notif_read ON admin_notifications(read, archived)`;
-  await sql`CREATE INDEX IF NOT EXISTS idx_scans_user ON scans(user_id)`;
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_notif_user ON user_notifications(user_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_admin_notif_read ON admin_notifications(read, archived)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_scans_user ON scans(user_id)`);
 }
 
 /* =========================================================
@@ -356,10 +344,10 @@ async function seedDefaults() {
     ["announcement", "text", "", "published"],
     ["legal", "privacy_heading", "Privacy Policy", "published"],
     ["legal", "privacy_intro", "PackPure is committed to protecting your privacy. This Privacy Policy explains what information we collect, why we collect it, how we use and protect it, and the choices you have — whether you are a visitor, a registered user, or an administrator of the platform.", "published"],
-    ["legal", "privacy_body", "1. Information We Collect\n\nWe collect information you provide directly when you create an account or interact with the platform. This may include your full name, email address, phone number, organisation, age, and the product scan data you upload and generate.\n\nWe also collect limited technical information automatically, such as your browser type and device IP address, to help us operate, secure, and troubleshoot the service.\n\n2. How We Use Your Information\n\nWe use your information to provide and operate the service: authenticating your account, storing and showing your scan history, generating compliance reports, responding to support questions, and keeping the platform secure.\n\nWe do not sell, rent, or trade your personal information to any third party.\n\n3. Product Scan Data\n\nProduct labels and extracted text you upload are stored securely and are associated only with your account. Scan results are visible to you and, where required for compliance administration, to authorised platform administrators. Administrators can see aggregated statistics and individual scan records for the purpose of maintaining service quality and regulatory compliance.\n\n4. Cookies and Sessions\n\nWe use a session cookie to keep you signed in. Session tokens are stored in secure, httpOnly cookies that cannot be read by client-side scripts. You can log out at any time to end your session.\n\n5. Data Security\n\nPasswords are stored as salted hashes and are never stored in plain text or exposed in our applications. Access to administrative functions is restricted to authorised personnel with appropriate credentials. While we apply reasonable technical and organisational safeguards, no method of transmission or storage is completely secure.\n\n6. Data Retention\n\nWe retain your account information for as long as your account remains active. You may ask us to delete your account and associated data, and we will remove it within a reasonable time.", "published"],
+    ["legal", "privacy_body", "1. Information We Collect\n\nWe collect information you provide directly when you create an account or interact with the platform. This may include your full name, email address, phone number, organisation, age, and the product scan data you upload and generate.\n\nWe also collect limited technical information automatically, such as your browser type and device IP address, to help us operate, secure, and troubleshoot the service.\n\n2. How We Use Your Information\n\nWe use your information to provide and operate the service: authenticating your account, storing and showing your scan history, generating compliance reports, responding to support questions, and keeping the platform secure.\n\nWe do not sell, rent, or trade your personal information to any third party.\n\n3. Product Scan Data\n\nProduct labels and extracted text you upload are stored securely and are associated only with your account. Scan results are visible to you and, where required for compliance administration, to authorised platform administrators. Administrators can see aggregated statistics and individual scan records for the purpose of maintaining service quality and regulatory compliance.\n\n4. Cookies and Sessions\n\nWe use a session cookie to keep you signed in. Session tokens are stored in secure, httpOnly cookies that cannot be read by client-side scripts. You can log out at any time to end your session.\n\n5. Data Security\n\nPasswords are stored as salted hashes and are never stored in plain text or exposed in our applications. Access to administrative functions is restricted to authorised personnel with appropriate credentials. While we apply reasonable technical and organisational safeguards, no method of transmission or storage is completely secure.\n\n6. Data Retention\n\nWe retain your account information for as long as your account remains active. You may ask us to delete your account and associated data, and we will remove it within a reasonable time.\n\n7. Contact\n\nIf you have any questions about these practices, contact us at the email address shown in the footer of the site.", "published"],
     ["legal", "terms_heading", "Terms & Services", "published"],
     ["legal", "terms_intro", "These Terms & Services (\"Terms\") govern your access to and use of PackPure. By registering for an account or using the platform in any way, you agree to be bound by these Terms and our Privacy Policy.", "published"],
-    ["legal", "terms_body", "1. Acceptance of Terms\n\nBy creating an account, accessing, or using PackPure, you confirm that you have read, understood, and agreed to these Terms. If you do not agree, please do not use the platform.\n\n2. Description of Service\n\nPackPure is a prototype platform that provides AI-assisted verification of packaged commodity labels for compliance purposes. It allows users to upload product images, extract label declarations, and compare them against configurable compliance rules.\n\n3. Accounts and Registration\n\nTo use certain features you must create an account. You agree to provide accurate and complete information during registration and to keep your account details up to date. You are responsible for safeguarding your credentials and for all activity that occurs under your account. Notify us promptly of any unauthorised use.\n\n4. Acceptable Use\n\nYou agree not to misuse the platform, including but not limited to: attempting to access the accounts of others; probing, scanning, or testing the security of the service without authorisation; uploading malicious content, unlawful material, or content that infringes the rights of others; using scraped or automated means to interfere with the service; or using the service for any unlawful purpose.\n\n5. Intellectual Property\n\nPackPure and its content — including software, text, graphics, logos, and the compliance rule templates — are the property of PackPure or its licensors and are protected by applicable intellectual property laws. Your scan results and uploaded images remain your content; you grant PackPure a limited licence to process and store that content solely to provide the service to you.\n\n6. No Professional or Legal Advice\n\nPackPure provides informational guidance for prototype use. Scan results, recommendations, and compliance verdicts are generated automatically and are for reference only. They are not legal advice, certification, or a substitute for assessment by a qualified professional.", "published"],
+    ["legal", "terms_body", "1. Acceptance of Terms\n\nBy creating an account, accessing, or using PackPure, you confirm that you have read, understood, and agreed to these Terms. If you do not agree, please do not use the platform.\n\n2. Description of Service\n\nPackPure is a prototype platform that provides AI-assisted verification of packaged commodity labels for compliance purposes. It allows users to upload product images, extract label declarations, and compare them against configurable compliance rules.\n\n3. Accounts and Registration\n\nTo use certain features you must create an account. You agree to provide accurate and complete information during registration and to keep your account details up to date. You are responsible for safeguarding your credentials and for all activity that occurs under your account. Notify us promptly of any unauthorised use.\n\n4. Acceptable Use\n\nYou agree not to misuse the platform, including but not limited to: attempting to access the accounts of others; probing, scanning, or testing the security of the service without authorisation; uploading malicious content, unlawful material, or content that infringes the rights of others; using scraped or automated means to interfere with the service; or using the service for any unlawful purpose.\n\n5. Intellectual Property\n\nPackPure and its content — including software, text, graphics, logos, and the compliance rule templates — are the property of PackPure or its licensors and are protected by applicable intellectual property laws. Your scan results and uploaded images remain your content; you grant PackPure a limited licence to process and store that content solely to provide the service to you.\n\n6. No Professional or Legal Advice\n\nPackPure provides informational guidance for prototype use. Scan results, recommendations, and compliance verdicts are generated automatically and are for reference only. They are not legal advice, certification, or a substitute for assessment by a qualified professional.\n\n7. Termination\n\nWe may suspend or terminate access to the service for conduct that violates these Terms or is otherwise harmful to the platform or others. You may stop using the service at any time.\n\n8. Changes to These Terms\n\nWe may update these Terms from time to time. Continued use of the service after changes take effect constitutes acceptance of the revised Terms.", "published"],
     ["legal", "last_updated", "", "published"],
   ];
   for (const [section, key, value, status] of defaults) {
@@ -416,7 +404,7 @@ let initialized = false;
 
 export async function init() {
   if (initialized) return;
-  if (!sql) throw new Error("NEON_DATABASE_URL environment variable is not set.");
+  if (!pool) throw new Error("NEON_DATABASE_URL environment variable is not set.");
   await migrate();
   try {
     await seedDefaults();
