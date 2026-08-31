@@ -722,15 +722,13 @@ async function seedAdmin() {
   const id = await db.insert(
     `INSERT INTO users (full_name, email, phone, password_hash, organization, role, status)
      VALUES (?, ?, ?, ?, ?, 'super_admin', 'active')
-     ON CONFLICT (email) DO NOTHING`,
+     ON CONFLICT (email) DO UPDATE SET
+       password_hash = EXCLUDED.password_hash,
+       role = 'super_admin',
+       status = 'active'`,
     ["PackPure Administrator", email, "+1 000 000 0000", hash, "PackPure"]
   );
-  if (id) {
-    await recordAudit({ adminId: id, action: "admin_seeded", category: "security", detail: `Super admin account created (${email})` });
-    console.log(`Seed: super admin created -> ${email}`);
-  } else {
-    console.log(`Seed: admin already exists -> ${email}`);
-  }
+  console.log(`Seed: admin ready -> ${email}`);
 }
 
 export default app;
