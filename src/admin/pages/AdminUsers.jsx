@@ -214,6 +214,8 @@ export default function AdminUsers({ treeMode, binMode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, filter, sort, kind]);
 
+  const adminView = kind === "admins";
+
   const counts = useMemo(() => {
     const c = { total: users.length, active: 0, suspended: 0, deleted: 0 };
     users.forEach((u) => {
@@ -347,11 +349,11 @@ export default function AdminUsers({ treeMode, binMode }) {
                 <th>User</th>
                 <th>Role</th>
                 <th>Status</th>
-                <th>Scans</th>
-                <th>Issues</th>
+                {!adminView && <th>Scans</th>}
+                {!adminView && <th>Issues</th>}
                 <th>Joined</th>
                 <th>Last Login</th>
-                <th>Actions</th>
+                {!adminView && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -368,35 +370,35 @@ export default function AdminUsers({ treeMode, binMode }) {
                   </td>
                   <td><StatusPill value={u.role} label={ROLE_LABEL[u.role] || u.role} /></td>
                   <td><StatusPill value={u.status} label={STATUS_LABEL[u.status] || u.status} /></td>
-                  <td>{u.scanCount}</td>
-                  <td>{u.issueCount > 0 ? <StatusPill value="fail" label={u.issueCount} /> : <span className="adm-muted">0</span>}</td>
+                  {!adminView && <td>{u.scanCount}</td>}
+                  {!adminView && (
+                    <td>{u.issueCount > 0 ? <StatusPill value="fail" label={u.issueCount} /> : <span className="adm-muted">0</span>}</td>
+                  )}
                   <td className="adm-muted">{formatDateOnly(u.createdAt)}</td>
                   <td className="adm-login-cell">
                     <span>{formatIST(u.lastLogin)}</span>
                     <button className="adm-btn adm-btn-xs adm-btn-ghost" onClick={() => setLoginsUser(u)}>History</button>
                   </td>
-                  <td className="adm-cols">
-                    <Link className="adm-btn adm-btn-xs" to={`/admin/users/${u.id}`}>View</Link>
-                    {isSuperAdmin && u.role === "user" && (
-                      <>
-                        {binMode ? (
-                          <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
-                        ) : u.status === "deleted" ? (
-                          <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
-                        ) : (
-                          <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "active" })}>Active</button>
-                        )}
-                        {!binMode && (
-                          <>
-                            <button className="adm-btn adm-btn-xs adm-btn-warn" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "suspended" })}>Suspend</button>
-                            {u.status !== "deleted" && (
-                              <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "delete" })}>Delete</button>
-                            )}
-                          </>
-                        )}
-                      </>
-                    )}
-                  </td>
+                  {!adminView && isSuperAdmin && u.role === "user" && (
+                    <td className="adm-cols">
+                      <Link className="adm-btn adm-btn-xs" to={`/admin/users/${u.id}`}>View</Link>
+                      {binMode ? (
+                        <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
+                      ) : u.status === "deleted" ? (
+                        <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
+                      ) : (
+                        <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "active" })}>Active</button>
+                      )}
+                      {!binMode && (
+                        <>
+                          <button className="adm-btn adm-btn-xs adm-btn-warn" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "suspended" })}>Suspend</button>
+                          {u.status !== "deleted" && (
+                            <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "delete" })}>Delete</button>
+                          )}
+                        </>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
