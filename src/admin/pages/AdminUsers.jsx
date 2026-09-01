@@ -119,6 +119,12 @@ export default function AdminUsers({ treeMode }) {
     load();
   }
 
+  async function removeUser() {
+    await adminApi.deleteUser(confirm.id);
+    setConfirm(null);
+    load();
+  }
+
   if (treeMode) {
     return (
       <div>
@@ -211,7 +217,7 @@ export default function AdminUsers({ treeMode }) {
                         ) : (
                           <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "active" })}>Activate</button>
                         )}
-                        <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "deleted" })}>Delete</button>
+                        <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "delete" })}>Delete</button>
                       </>
                     )}
                   </td>
@@ -224,12 +230,16 @@ export default function AdminUsers({ treeMode }) {
 
       <ConfirmModal
         open={!!confirm}
-        title={confirm?.next === "deleted" ? "Delete user?" : confirm?.next === "suspended" ? "Suspend user?" : "Activate user?"}
-        message={`Are you sure you want to set "${confirm?.name}" to ${confirm?.next}?`}
-        confirmText="Confirm"
-        tone={confirm?.next === "deleted" ? "danger" : confirm?.next === "suspended" ? "warn" : "ok"}
+        title={confirm?.next === "delete" ? "Delete permanently?" : confirm?.next === "suspended" ? "Suspend user?" : "Activate user?"}
+        message={
+          confirm?.next === "delete"
+            ? `This will permanently delete "${confirm?.name}" and remove all their data (scans, activity, notifications). This cannot be undone.`
+            : `Are you sure you want to set "${confirm?.name}" to ${confirm?.next}?`
+        }
+        confirmText={confirm?.next === "delete" ? "Delete permanently" : "Confirm"}
+        tone={confirm?.next === "delete" || confirm?.next === "suspended" ? "danger" : "ok"}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => changeStatus(confirm.next)}
+        onConfirm={confirm?.next === "delete" ? () => removeUser() : () => changeStatus(confirm.next)}
       />
     </div>
   );

@@ -45,6 +45,11 @@ export default function AdminUserDetail() {
     load();
   }
 
+  async function removeUser() {
+    await adminApi.deleteUser(user.id);
+    window.location.href = "/admin/users";
+  }
+
   const statusActions =
     isSuperAdmin && user.role === "user" ? (
       <>
@@ -54,7 +59,7 @@ export default function AdminUserDetail() {
         {user.status === "suspended" && (
           <button className="adm-btn adm-btn-ok" onClick={() => setConfirm({ next: "active" })}>Activate</button>
         )}
-        <button className="adm-btn adm-btn-danger" onClick={() => setConfirm({ next: "deleted" })}>Delete</button>
+        <button className="adm-btn adm-btn-danger" onClick={() => setConfirm({ next: "delete" })}>Delete</button>
       </>
     ) : null;
 
@@ -146,12 +151,16 @@ export default function AdminUserDetail() {
 
       <ConfirmModal
         open={!!confirm}
-        title={confirm?.next === "deleted" ? "Delete user?" : confirm?.next === "suspended" ? "Suspend user?" : "Activate user?"}
-        message={`Are you sure you want to set ${user.fullName} to ${confirm?.next}?`}
-        confirmText="Confirm"
-        tone={confirm?.next === "deleted" ? "danger" : confirm?.next === "suspended" ? "warn" : "ok"}
+        title={confirm?.next === "delete" ? "Delete permanently?" : confirm?.next === "suspended" ? "Suspend user?" : "Activate user?"}
+        message={
+          confirm?.next === "delete"
+            ? `This will permanently delete ${user.fullName} and remove all their data (scans, activity, notifications). This cannot be undone.`
+            : `Are you sure you want to set ${user.fullName} to ${confirm?.next}?`
+        }
+        confirmText={confirm?.next === "delete" ? "Delete permanently" : "Confirm"}
+        tone={confirm?.next === "delete" || confirm?.next === "suspended" ? "danger" : "ok"}
         onCancel={() => setConfirm(null)}
-        onConfirm={() => changeStatus(confirm.next)}
+        onConfirm={confirm?.next === "delete" ? () => removeUser() : () => changeStatus(confirm.next)}
       />
     </div>
   );

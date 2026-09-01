@@ -292,6 +292,25 @@ router.patch("/users/:id/status", requireAdmin, async (req, res) => {
   res.json({ ok: true });
 });
 
+router.delete("/users/:id", requireSuperAdmin, async (req, res) => {
+  const row = await db.get(`SELECT id, full_name, email, role FROM users WHERE id = ?`, [req.params.id]);
+  if (!row) return res.status(404).json({ error: "User not found." });
+  if (Number(row.id) === Number(req.user.id)) {
+    return res.status(400).json({ error: "You cannot delete your own account." });
+  }
+  if (isAdminRole(row.role)) {
+    return res.status(400).json({ error: "Admin accounts cannot be deleted through the user list." });
+  }
+  await db.run(`DELETE FROM sessions WHERE user_id = ?`, [row.id]);
+  await db.run(`DELETE FROM scans WHERE user_id = ?`, [row.id]);
+  await db.run(`DELETE FROM user_logins WHERE user_id = ?`, [row.id]);
+  await db.run(`DELETE FROM user_activities WHERE user_id = ?`, [row.id]);
+  await db.run(`DELETE FROM user_notifications WHERE user_id = ?`, [row.id]);
+  await db.run(`DELETE FROM users WHERE id = ?`, [row.id]);
+  await recordAudit({ adminId: req.user.id, action: "user_deleted", category: "users", detail: `${row.full_name} (${row.id}, ${row.email}) permanently deleted` });
+  res.json({ ok: true });
+});
+
 router.get("/users/:id/activities", requireAdmin, async (req, res) => {
   const rows = await db.all(
     `SELECT * FROM user_activities WHERE user_id = ? ORDER BY id DESC LIMIT 100`,
