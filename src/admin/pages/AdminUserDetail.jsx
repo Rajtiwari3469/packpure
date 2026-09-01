@@ -53,12 +53,8 @@ export default function AdminUserDetail() {
   const statusActions =
     isSuperAdmin && user.role === "user" ? (
       <>
-        {user.status === "active" && (
-          <button className="adm-btn adm-btn-warn" onClick={() => setConfirm({ next: "suspended" })}>Suspend</button>
-        )}
-        {user.status === "suspended" && (
-          <button className="adm-btn adm-btn-ok" onClick={() => setConfirm({ next: "active" })}>Activate</button>
-        )}
+        <button className="adm-btn adm-btn-ok" onClick={() => setConfirm({ next: "active" })}>Active</button>
+        <button className="adm-btn adm-btn-warn" onClick={() => setConfirm({ next: "suspended" })}>Suspend</button>
         <button className="adm-btn adm-btn-danger" onClick={() => setConfirm({ next: "delete" })}>Delete</button>
       </>
     ) : null;
@@ -151,14 +147,20 @@ export default function AdminUserDetail() {
 
       <ConfirmModal
         open={!!confirm}
-        title={confirm?.next === "delete" ? "Delete permanently?" : confirm?.next === "suspended" ? "Suspend user?" : "Activate user?"}
+        title={
+          confirm?.next === "delete" ? "Delete permanently?"
+            : confirm?.next === "suspended" ? "Suspend user?"
+            : "Set user active?"
+        }
         message={
           confirm?.next === "delete"
             ? `This will permanently delete ${user.fullName} and remove all their data (scans, activity, notifications). This cannot be undone.`
-            : `Are you sure you want to set ${user.fullName} to ${confirm?.next}?`
+            : confirm?.next === "suspended"
+            ? `Are you sure you want to suspend ${user.fullName}? They will not be able to sign in.`
+            : `Are you sure you want to set ${user.fullName} to active?`
         }
         confirmText={confirm?.next === "delete" ? "Delete permanently" : "Confirm"}
-        tone={confirm?.next === "delete" || confirm?.next === "suspended" ? "danger" : "ok"}
+        tone={confirm?.next === "delete" ? "danger" : confirm?.next === "suspended" ? "warn" : "ok"}
         onCancel={() => setConfirm(null)}
         onConfirm={confirm?.next === "delete" ? () => removeUser() : () => changeStatus(confirm.next)}
       />

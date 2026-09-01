@@ -731,22 +731,39 @@
 .adm-table th,
 .adm-table td {
   text-align: left;
+  vertical-align: middle;
   padding: 12px 14px;
   border-bottom: 1px solid var(--adm-border);
 }
+.adm-table th + th,
+.adm-table td + td {
+  border-left: 1px solid var(--adm-border);
+}
 .adm-table thead th {
-  background: #f8fafc;
+  background: #f4f6f8;
   color: var(--adm-muted);
   font-size: 12px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   white-space: nowrap;
+  border-top: 1px solid var(--adm-border);
+}
+.adm-table tbody tr:nth-child(even) td {
+  background: #f9fafb;
+}
+.adm-table tbody tr:nth-child(even):hover td,
+.adm-table tbody tr:nth-child(odd):hover td {
+  background: #eef4f0;
 }
 .adm-table tbody tr:last-child td {
   border-bottom: none;
 }
-.adm-table tbody tr:hover {
-  background: #fafbfd;
+.adm-table td:first-child {
+  min-width: 220px;
+}
+.adm-table .adm-cols {
+  white-space: nowrap;
 }
 .adm-cell-break {
   word-break: break-word;
@@ -1632,7 +1649,11 @@
   background: #16213a;
   color: var(--adm-muted);
 }
-[data-theme="dark"] .adm-table tbody tr:hover {
+[data-theme="dark"] .adm-table tbody tr:nth-child(even) td {
+  background: #131c31;
+}
+[data-theme="dark"] .adm-table tbody tr:nth-child(even):hover td,
+[data-theme="dark"] .adm-table tbody tr:nth-child(odd):hover td {
   background: #1a2741;
 }
 [data-theme="dark"] .adm-table th,
