@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { adminApi } from "../adminApi.js";
 import { useAdmin } from "../AdminContext.jsx";
+import { showSuccess, showError } from "../notify.jsx";
 import {
   Spinner, ErrorState, EmptyState, ConfirmModal, StatusPill, ROLE_LABEL,
   STATUS_LABEL, PageHeader, formatDate, formatDateOnly, initials, useTitle,
@@ -15,6 +16,8 @@ export default function AdminUserDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [newPw, setNewPw] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
   useTitle("User Detail");
 
   async function load() {
@@ -54,6 +57,24 @@ export default function AdminUserDetail() {
     await adminApi.restoreUser(user.id);
     setConfirm(null);
     load();
+  }
+
+  async function savePw() {
+    const pw = (newPw || "").trim();
+    if (pw.length < 6) {
+      showError("Invalid password", "Password must be at least 6 characters.");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await adminApi.setUserPassword(user.id, pw);
+      setNewPw("");
+      showSuccess("Password updated", `New password set for ${user.fullName}.`);
+    } catch (e) {
+      showError("Could not set password", e.message);
+    } finally {
+      setPwSaving(false);
+    }
   }
 
   const statusActions =
@@ -112,6 +133,34 @@ export default function AdminUserDetail() {
             <div className="adm-stat-tile ok"><b>{stats.compliant}</b><span>Compliant</span></div>
             <div className="adm-stat-tile bad"><b>{stats.nonCompliant}</b><span>Non-Compliant</span></div>
           </div>
+        </div>
+
+        <div className="adm-card">
+          <h3 className="adm-card-title">Account Password</h3>
+          <dl className="adm-dl">
+            <div><dt>Password</dt><dd><span className="adm-pwd-dots">••••••••••</span></dd></div>
+          </dl>
+          <p className="adm-muted">
+            Only admins can see this section. Passwords are stored as secure hashes and can’t be
+            recovered, so a new one can be set instead.
+          </p>
+          <div className="adm-pwd-row">
+            <input
+              className="adm-input"
+              type="text"
+              placeholder="New password (min 6 chars)"
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+            />
+            <button
+              className="adm-btn adm-btn-primary"
+              disabled={!isSuperAdmin || !newPw.trim() || pwSaving}
+              onClick={savePw}
+            >
+              {pwSaving ? "Saving…" : "Set Password"}
+            </button>
+          </div>
+          {!isSuperAdmin && <p className="adm-muted">Only super admins can change passwords.</p>}
         </div>
 
         <div className="adm-card">

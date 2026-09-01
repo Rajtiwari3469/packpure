@@ -1,6 +1,6 @@
 import { Router } from "express";
 import db from "./db.js";
-import { comparePassword, createSession, destroySession, cookieOptions, COOKIE_NAME } from "./auth.js";
+import { comparePassword, hashPassword, createSession, destroySession, cookieOptions, COOKIE_NAME } from "./auth.js";
 import {
   isAdminRole,
   recordAudit,
@@ -356,6 +356,22 @@ router.get("/users/:id/logins", requireAdmin, async (req, res) => {
     [req.params.id]
   );
   res.json({ logins: rows });
+});
+
+router.post("/users/:id/password", requireAdmin, async (req, res) => {
+  const row = await db.get(`SELECT id, full_name, role FROM users WHERE id = ?`, [req.params.id]);
+  if (!row) return res.status(404).json({ error: "User not found." });
+  if (isAdminRole(row.role)) {
+    return res.status(403).json({ error: "Cannot change an admin account's password here." });
+  }
+  const password = String((req.body || {}).password || "");
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters." });
+  }
+  const hash = await hashPassword(password);
+  await db.run(`UPDATE users SET password_hash = ? WHERE id = ?`, [hash, row.id]);
+  await recordAudit({ adminId: req.user.id, action: "user_password_reset", category: "users", detail: `${row.full_name} (${row.id}) password reset by admin` });
+  res.json({ ok: true });
 });
 
 /* ---------------------------------------------------------

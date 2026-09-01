@@ -507,6 +507,18 @@
 .adm-stat-tile.ok b { color: var(--adm-g); }
 .adm-stat-tile.bad b { color: var(--adm-red); }
 
+/* ---------------- Password box ---------------- */
+.adm-pwd-dots {
+  letter-spacing: 3px;
+  font-weight: 700;
+  color: var(--adm-muted);
+}
+.adm-pwd-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 /* ---------------- Account type tabs ---------------- */
 .adm-kind-tabs {
   display: inline-flex;

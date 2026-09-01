@@ -47,6 +47,7 @@ export const adminApi = {
   deleteUser: (id) => request("DELETE", `${BASE}/users/${id}`),
   restoreUser: (id) => request("POST", `${BASE}/users/${id}/restore`),
   userActivities: (id) => request("GET", `${BASE}/users/${id}/activities`),
+  setUserPassword: (id, password) => request("POST", `${BASE}/users/${id}/password`, { password }),
 
   scans: (params = {}) => {
     const q = new URLSearchParams(
