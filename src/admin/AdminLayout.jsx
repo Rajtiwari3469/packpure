@@ -148,7 +148,7 @@ function AdminBell({ badgeCount }) {
 
 const NAV = [
   { to: "/admin", label: "Overview", icon: "📊", exact: true },
-  { to: "/admin/users", label: "Users", icon: "👥" },
+  { to: "/admin/users", label: "Users & Admin", icon: "👥" },
   { to: "/admin/bin", label: "Bin", icon: "🗑️" },
   { to: "/admin/scans", label: "Scans", icon: "🔍" },
   { to: "/admin/compliance", label: "Compliance", icon: "⚖️" },

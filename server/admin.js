@@ -7,6 +7,7 @@ import {
   addNotification,
   addUserNotification,
   addActivity,
+  addLogin,
   setContent,
   getContentMap,
   getSection,
@@ -70,6 +71,7 @@ router.post("/auth/login", async (req, res) => {
   if (!valid) {
     return res.status(401).json({ error: "Invalid admin credentials." });
   }
+  await addLogin(user.id);
   const token = await createSession(user.id);
   res.cookie(COOKIE_NAME, token, cookieOptions());
   res.json({
@@ -156,9 +158,12 @@ function userPublic(row) {
 }
 
 router.get("/users", requireAdmin, async (req, res) => {
-  const { q = "", filter = "all", sort = "newest" } = req.query;
+  const { q = "", filter = "all", sort = "newest", kind = "" } = req.query;
   let where = "WHERE 1=1";
   const params = [];
+
+  if (kind === "admins") where += ` AND u.role IN ('admin','super_admin')`;
+  else if (kind === "users") where += ` AND u.role = 'user'`;
 
   if (q) {
     where += ` AND (u.full_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ? OR u.organization LIKE ? OR CAST(u.id AS TEXT) = ?)`;
@@ -188,6 +193,7 @@ router.get("/users", requireAdmin, async (req, res) => {
        (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id) AS scan_count,
        (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id AND s.checks LIKE '%"status":"fail"%') AS issue_count,
        (SELECT MAX(created_at) FROM user_activities a WHERE a.user_id = u.id) AS last_activity,
+       (SELECT MAX(created_at) FROM user_logins l WHERE l.user_id = u.id) AS last_login,
        u.created_at
      FROM users u ${where} ORDER BY ${orderBy}`,
     params
@@ -198,6 +204,7 @@ router.get("/users", requireAdmin, async (req, res) => {
     scanCount: Number(r.scan_count || 0),
     issueCount: Number(r.issue_count || 0),
     lastActivity: r.last_activity,
+    lastLogin: r.last_login,
   }));
 
   res.json({ users });
@@ -341,6 +348,14 @@ router.get("/users/:id/activities", requireAdmin, async (req, res) => {
     [req.params.id]
   );
   res.json({ activities: rows });
+});
+
+router.get("/users/:id/logins", requireAdmin, async (req, res) => {
+  const rows = await db.all(
+    `SELECT id, created_at FROM user_logins WHERE user_id = ? ORDER BY id DESC LIMIT 50`,
+    [req.params.id]
+  );
+  res.json({ logins: rows });
 });
 
 /* ---------------------------------------------------------

@@ -76,6 +76,84 @@ function TreeView() {
   );
 }
 
+function formatIST(iso) {
+  if (!iso) return "—";
+  const norm = String(iso).replace(" ", "T").replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+  const d = new Date(norm);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-US", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function LoginsModal({ user, onClose }) {
+  const [logins, setLogins] = useState(null);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let active = true;
+    setError(null);
+    setLogins(null);
+    adminApi
+      .userLogins(user.id)
+      .then((d) => {
+        if (active) setLogins(d.logins || []);
+      })
+      .catch((e) => {
+        if (active) setError(e.message);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user.id]);
+
+  return (
+    <div className="adm-modal-overlay" onClick={onClose}>
+      <div className="adm-modal adm-modal-wide" onClick={(e) => e.stopPropagation()}>
+        <h3>Login history — {user.fullName}</h3>
+        <p className="adm-muted">{user.email} · shown in IST</p>
+        {error ? (
+          <ErrorState
+            message={error}
+            onRetry={() => {
+              setError(null);
+              setLogins(null);
+              adminApi.userLogins(user.id).then((d) => setLogins(d.logins || [])).catch((e) => setError(e.message));
+            }}
+          />
+        ) : !logins ? (
+          <Spinner />
+        ) : logins.length === 0 ? (
+          <EmptyState title="No logins recorded" sub="Login events will appear here whenever this account signs in." />
+        ) : (
+          <ul className="adm-activity">
+            {logins.map((l) => (
+              <li key={l.id}>
+                <span className="adm-activity-dot adm-dot-newuser" />
+                <div className="adm-activity-body">
+                  <div className="adm-activity-title">
+                    <strong>Account login</strong>
+                    <span className="adm-activity-time">{formatIST(l.created_at)}</span>
+                  </div>
+                  <span className="adm-activity-meta">IST</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="adm-modal-actions">
+          <button className="adm-btn" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function UsersOverviewBar({ stats }) {
   const total = Number(stats.totalUsers || 0);
   const active = Number(stats.activeUsers || 0);
@@ -112,14 +190,16 @@ export default function AdminUsers({ treeMode, binMode }) {
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState(binMode ? "bin" : "all");
   const [sort, setSort] = useState("newest");
+  const [kind, setKind] = useState("users");
   const [confirm, setConfirm] = useState(null);
-  useTitle(binMode ? "User Bin" : treeMode ? "Users Folder Tree" : "Users");
+  const [loginsUser, setLoginsUser] = useState(null);
+  useTitle(binMode ? "User Bin" : treeMode ? "Users Folder Tree" : "Users & Admin");
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const [d, ov] = await Promise.all([adminApi.users({ q, filter, sort }), adminApi.overview()]);
+      const [d, ov] = await Promise.all([adminApi.users({ q, filter, sort, kind }), adminApi.overview()]);
       setUsers(d.users || []);
       setOverview(ov.stats || null);
     } catch (e) {
@@ -132,7 +212,7 @@ export default function AdminUsers({ treeMode, binMode }) {
     const t = setTimeout(load, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, filter, sort]);
+  }, [q, filter, sort, kind]);
 
   const counts = useMemo(() => {
     const c = { total: users.length, active: 0, suspended: 0, deleted: 0 };
@@ -176,22 +256,48 @@ export default function AdminUsers({ treeMode, binMode }) {
   return (
     <div>
       <PageHeader
-        title={binMode ? "User Bin" : "Users"}
+        title={binMode ? "User Bin" : treeMode ? "Users Folder Tree" : "Users & Admin"}
         sub={
           binMode
             ? `${counts.total} users in bin`
+            : treeMode
+            ? "Browse registered accounts organised by registration date."
+            : kind === "admins"
+            ? `${counts.total} admin accounts`
             : `${counts.total} registered users`
         }
         actions={
           binMode ? (
-            <Link className="adm-btn" to="/admin/users">👥 Users</Link>
+            <Link className="adm-btn" to="/admin/users">👥 Users & Admin</Link>
+          ) : treeMode ? (
+            <Link className="adm-btn adm-btn-ghost" to="/admin/users">List View</Link>
           ) : (
-            <Link className="adm-btn" to="/admin/users/tree">📂 Folder Tree</Link>
+            <>
+              <span className="adm-kind-tabs" role="tablist" aria-label="Account type">
+                <button
+                  className={`adm-kind-tab${kind === "users" ? " active" : ""}`}
+                  role="tab"
+                  aria-selected={kind === "users"}
+                  onClick={() => setKind("users")}
+                >
+                  👤 Users
+                </button>
+                <button
+                  className={`adm-kind-tab${kind === "admins" ? " active" : ""}`}
+                  role="tab"
+                  aria-selected={kind === "admins"}
+                  onClick={() => setKind("admins")}
+                >
+                  🛡️ Admins
+                </button>
+              </span>
+              <Link className="adm-btn" to="/admin/users/tree">📂 Folder Tree</Link>
+            </>
           )
         }
       />
 
-      {!binMode && overview && (
+      {!binMode && !treeMode && overview && (
         <UsersOverviewBar stats={overview} />
       )}
 
@@ -244,6 +350,7 @@ export default function AdminUsers({ treeMode, binMode }) {
                 <th>Scans</th>
                 <th>Issues</th>
                 <th>Joined</th>
+                <th>Last Login</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -264,6 +371,10 @@ export default function AdminUsers({ treeMode, binMode }) {
                   <td>{u.scanCount}</td>
                   <td>{u.issueCount > 0 ? <StatusPill value="fail" label={u.issueCount} /> : <span className="adm-muted">0</span>}</td>
                   <td className="adm-muted">{formatDateOnly(u.createdAt)}</td>
+                  <td className="adm-login-cell">
+                    <span>{formatIST(u.lastLogin)}</span>
+                    <button className="adm-btn adm-btn-xs adm-btn-ghost" onClick={() => setLoginsUser(u)}>History</button>
+                  </td>
                   <td className="adm-cols">
                     <Link className="adm-btn adm-btn-xs" to={`/admin/users/${u.id}`}>View</Link>
                     {isSuperAdmin && u.role === "user" && (
@@ -292,6 +403,8 @@ export default function AdminUsers({ treeMode, binMode }) {
           </table>
         </div>
       )}
+
+      {loginsUser && <LoginsModal user={loginsUser} onClose={() => setLoginsUser(null)} />}
 
       <ConfirmModal
         open={!!confirm}
