@@ -91,14 +91,14 @@ router.post("/auth/logout", async (req, res) => {
 router.get("/overview", requireAdmin, async (req, res) => {
   const totals = await db.get(
     `SELECT
-       COUNT(DISTINCT u.id) AS totalUsers,
-       SUM(CASE WHEN u.status='active' THEN 1 ELSE 0 END) AS activeUsers,
-       SUM(CASE WHEN u.status='suspended' THEN 1 ELSE 0 END) AS suspendedUsers,
-       SUM(CASE WHEN u.status='deleted' THEN 1 ELSE 0 END) AS binUsers,
-       (SELECT COUNT(*) FROM scans) AS totalScans,
-       (SELECT COUNT(*) FROM scans WHERE checks NOT LIKE '%"status":"fail"%') AS compScans,
-       (SELECT COUNT(*) FROM scans WHERE checks LIKE '%"status":"fail"%') AS nonCompScans,
-       (SELECT COUNT(*) FROM scans WHERE created_at >= date('now')) AS todayScans,
+       COUNT(DISTINCT u.id) AS "totalUsers",
+       SUM(CASE WHEN u.status='active' THEN 1 ELSE 0 END) AS "activeUsers",
+       SUM(CASE WHEN u.status='suspended' THEN 1 ELSE 0 END) AS "suspendedUsers",
+       SUM(CASE WHEN u.status='deleted' THEN 1 ELSE 0 END) AS "binUsers",
+       (SELECT COUNT(*) FROM scans) AS "totalScans",
+       (SELECT COUNT(*) FROM scans WHERE checks NOT LIKE '%"status":"fail"%') AS "compScans",
+       (SELECT COUNT(*) FROM scans WHERE checks LIKE '%"status":"fail"%') AS "nonCompScans",
+       (SELECT COUNT(*) FROM scans WHERE created_at >= date('now')) AS "todayScans",
        (SELECT COUNT(*) FROM scans WHERE extracted_data LIKE '%"pending"%' OR checks LIKE '%"status":"pending"%') AS pending
      FROM users u`
   );
