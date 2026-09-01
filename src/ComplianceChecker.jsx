@@ -196,9 +196,6 @@ function ComplianceChecker() {
   const [showAuthPrompt, setShowAuthPrompt] =
     useState(false);
 
-  const [shareCopied, setShareCopied] =
-    useState(false);
-
   const fileInputRef = useRef(null);
   const frontInputRef = useRef(null);
   const backInputRef = useRef(null);
@@ -718,31 +715,6 @@ function ComplianceChecker() {
   };
 
   /* =======================================================
-     SHARE WEBSITE
-  ======================================================= */
-
-  const shareWebsite = async () => {
-    const url = "https://packpure.vercel.app";
-    const title = "PackPure — Verify Product Labels";
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, url });
-        return;
-      }
-    } catch (err) {
-      if (err?.name === "AbortError") return;
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setShareCopied(true);
-      showSuccess("Link copied", "packpure.vercel.app copied to clipboard.", { id: "share-copy" });
-      setTimeout(() => setShareCopied(false), 2000);
-    } catch {
-      showError("Couldn't share", "Please copy the link manually: packpure.vercel.app", { id: "share-fail" });
-    }
-  };
-
-  /* =======================================================
      RESET
   ======================================================= */
 
@@ -1051,20 +1023,6 @@ function ComplianceChecker() {
             <strong>AI</strong>
             <span>LABEL ANALYSIS</span>
           </div>
-        </section>
-
-        {/* Share */}
-        <section className="share-bar">
-          <div className="share-bar-copy">
-            <strong>Share PackPure</strong>
-            <span>packpure.vercel.app</span>
-          </div>
-          <button
-            className="secondary-btn"
-            onClick={shareWebsite}
-          >
-            {shareCopied ? "✓ Copied" : "Share Website Link"}
-          </button>
         </section>
 
         {/* Upload */}
