@@ -213,14 +213,16 @@ router.get("/users", requireAdmin, async (req, res) => {
       .replace(/([+-]\d{2})$/, "$1:00");
     const d = new Date(norm);
     if (!ts || isNaN(d.getTime())) return;
-    const year = d.getFullYear();
-    const month = d.toLocaleString("en-US", { month: "long" });
-    const dateKey = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
-    const timeKey = d.toLocaleString("en-US", {
-      hour: "2-digit",
+    const TZ = "Asia/Kolkata";
+    const year = new Intl.DateTimeFormat("en-US", { timeZone: TZ, year: "numeric" }).format(d);
+    const month = new Intl.DateTimeFormat("en-US", { timeZone: TZ, month: "long" }).format(d);
+    const dateKey = new Intl.DateTimeFormat("en-US", { timeZone: TZ, day: "2-digit", month: "short" }).format(d);
+    const timeKey = new Intl.DateTimeFormat("en-US", {
+      timeZone: TZ,
+      hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    });
+    }).format(d);
     if (!tree[year]) tree[year] = {};
     if (!tree[year][month]) tree[year][month] = {};
     if (!tree[year][month][dateKey]) tree[year][month][dateKey] = {};
