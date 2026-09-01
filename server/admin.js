@@ -174,7 +174,7 @@ router.get("/users", requireAdmin, async (req, res) => {
   if (filter === "active") where += ` AND u.status = 'active'`;
   else if (filter === "inactive") where += ` AND (u.status = 'suspended' OR u.status = 'deleted')`;
   else if (filter === "suspended") where += ` AND u.status = 'suspended'`;
-  else if (filter === "bin") where += ` AND u.status = 'deleted'`;
+  else if (filter === "bin") where += ` AND u.status = 'deleted' AND u.role = 'user'`;
   else if (filter === "new") where += ` AND u.created_at >= datetime('now', '-7 days')`;
   else if (filter === "with_scans") where += ` AND (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id) > 0`;
   else if (filter === "with_issues") where += ` AND (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id AND s.checks LIKE '%"status":"fail"%') > 0`;

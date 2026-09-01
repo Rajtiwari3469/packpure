@@ -199,7 +199,7 @@ export default function AdminUsers({ treeMode, binMode }) {
     setLoading(true);
     setError(null);
     try {
-      const [d, ov] = await Promise.all([adminApi.users({ q, filter, sort, kind }), adminApi.overview()]);
+      const [d, ov] = await Promise.all([adminApi.users({ q, filter, sort, kind: effKind }), adminApi.overview()]);
       setUsers(d.users || []);
       setOverview(ov.stats || null);
     } catch (e) {
@@ -212,9 +212,10 @@ export default function AdminUsers({ treeMode, binMode }) {
     const t = setTimeout(load, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, filter, sort, kind]);
+  }, [q, filter, sort, effKind]);
 
   const adminView = kind === "admins";
+  const effKind = binMode ? "users" : kind;
 
   const counts = useMemo(() => {
     const c = { total: users.length, active: 0, suspended: 0, deleted: 0 };
