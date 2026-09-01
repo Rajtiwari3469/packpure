@@ -605,11 +605,13 @@ router.post("/notifications/:id/archive", requireAdmin, async (req, res) => {
 
 router.get("/badges", requireAdmin, async (req, res) => {
   const users = await db.get(`SELECT COUNT(*) AS c FROM users WHERE status = 'active'`);
+  const bin = await db.get(`SELECT COUNT(*) AS c FROM users WHERE status = 'deleted'`);
   const scans = await db.get(`SELECT COUNT(*) AS c FROM scans`);
   const messages = await db.get(`SELECT COUNT(*) AS c FROM contact_messages WHERE status = 'open'`);
   const alerts = await db.get(`SELECT COUNT(*) AS c FROM admin_notifications WHERE read = 0 AND archived = 0`);
   res.json({
     users: Number(users?.c || 0),
+    bin: Number(bin?.c || 0),
     scans: Number(scans?.c || 0),
     messages: Number(messages?.c || 0),
     alerts: Number(alerts?.c || 0),

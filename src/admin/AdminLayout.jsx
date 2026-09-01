@@ -149,6 +149,7 @@ function AdminBell({ badgeCount }) {
 const NAV = [
   { to: "/admin", label: "Overview", icon: "📊", exact: true },
   { to: "/admin/users", label: "Users", icon: "👥" },
+  { to: "/admin/bin", label: "Bin", icon: "🗑️" },
   { to: "/admin/scans", label: "Scans", icon: "🔍" },
   { to: "/admin/compliance", label: "Compliance", icon: "⚖️" },
   { to: "/admin/website", label: "Website", icon: "🌐" },
@@ -177,12 +178,15 @@ function SideContent({ badges, onNavigate }) {
           <span className="adm-nav-label">{item.label}</span>
           {badges &&
             ((item.to === "/admin/users" && badges.users) ||
+              (item.to === "/admin/bin" && badges.bin) ||
               (item.to === "/admin/scans" && badges.scans) ||
               (item.to === "/admin/messages" && badges.messages) ||
               (item.to === "/admin/notifications" && badges.alerts)) && (
               <span className="adm-nav-badge">
                 {item.to === "/admin/users"
                   ? badges.users
+                  : item.to === "/admin/bin"
+                  ? badges.bin
                   : item.to === "/admin/scans"
                   ? badges.scans
                   : item.to === "/admin/messages"

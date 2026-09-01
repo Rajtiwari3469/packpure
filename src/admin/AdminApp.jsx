@@ -29,6 +29,7 @@ export default function AdminApp() {
           <Route index element={<AdminOverview />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="users/tree" element={<AdminUsers treeMode />} />
+          <Route path="bin" element={<AdminUsers binMode />} />
           <Route path="users/:id" element={<AdminUserDetail />} />
           <Route path="scans" element={<AdminScans />} />
           <Route path="scans/:id" element={<AdminScanDetail />} />

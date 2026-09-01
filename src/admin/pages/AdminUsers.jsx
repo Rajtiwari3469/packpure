@@ -103,17 +103,17 @@ function UsersOverviewBar({ stats }) {
   );
 }
 
-export default function AdminUsers({ treeMode }) {
+export default function AdminUsers({ treeMode, binMode }) {
   const { isSuperAdmin } = useAdmin();
   const [users, setUsers] = useState([]);
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(binMode ? "bin" : "all");
   const [sort, setSort] = useState("newest");
   const [confirm, setConfirm] = useState(null);
-  useTitle(treeMode ? "Users Folder Tree" : "Users");
+  useTitle(binMode ? "User Bin" : treeMode ? "Users Folder Tree" : "Users");
 
   async function load() {
     setLoading(true);
@@ -176,12 +176,22 @@ export default function AdminUsers({ treeMode }) {
   return (
     <div>
       <PageHeader
-        title="Users"
-        sub={`${counts.total} registered users`}
-        actions={<Link className="adm-btn" to="/admin/users/tree">📂 Folder Tree</Link>}
+        title={binMode ? "User Bin" : "Users"}
+        sub={
+          binMode
+            ? `${counts.total} users in bin`
+            : `${counts.total} registered users`
+        }
+        actions={
+          binMode ? (
+            <Link className="adm-btn" to="/admin/users">👥 Users</Link>
+          ) : (
+            <Link className="adm-btn" to="/admin/users/tree">📂 Folder Tree</Link>
+          )
+        }
       />
 
-      {overview && (
+      {!binMode && overview && (
         <UsersOverviewBar stats={overview} />
       )}
 
@@ -192,16 +202,18 @@ export default function AdminUsers({ treeMode }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <select className="adm-select" value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All statuses</option>
-          <option value="active">Active</option>
-          <option value="suspended">Suspended</option>
-          <option value="bin">Bin (deleted)</option>
-          <option value="inactive">Inactive</option>
-          <option value="new">New (7 days)</option>
-          <option value="with_scans">Has scans</option>
-          <option value="with_issues">Has issues</option>
-        </select>
+        {!binMode && (
+          <select className="adm-select" value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="bin">Bin (deleted)</option>
+            <option value="inactive">Inactive</option>
+            <option value="new">New (7 days)</option>
+            <option value="with_scans">Has scans</option>
+            <option value="with_issues">Has issues</option>
+          </select>
+        )}
         <select className="adm-select" value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
@@ -216,7 +228,11 @@ export default function AdminUsers({ treeMode }) {
       ) : error ? (
         <ErrorState message={error} onRetry={load} />
       ) : users.length === 0 ? (
-        <EmptyState title="No users found" sub="Try adjusting your search or filters." />
+        binMode ? (
+          <EmptyState title="Bin is empty" sub="Deleted users will appear here so you can restore them." />
+        ) : (
+          <EmptyState title="No users found" sub="Try adjusting your search or filters." />
+        )
       ) : (
         <div className="adm-table-wrap">
           <table className="adm-table">
@@ -252,13 +268,21 @@ export default function AdminUsers({ treeMode }) {
                     <Link className="adm-btn adm-btn-xs" to={`/admin/users/${u.id}`}>View</Link>
                     {isSuperAdmin && u.role === "user" && (
                       <>
-                        {u.status === "deleted" ? (
+                        {binMode ? (
+                          <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
+                        ) : u.status === "deleted" ? (
                           <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
                         ) : (
                           <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "active" })}>Active</button>
                         )}
-                        <button className="adm-btn adm-btn-xs adm-btn-warn" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "suspended" })}>Suspend</button>
-                        <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "delete" })}>Delete</button>
+                        {!binMode && (
+                          <>
+                            <button className="adm-btn adm-btn-xs adm-btn-warn" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "suspended" })}>Suspend</button>
+                            {u.status !== "deleted" && (
+                              <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "delete" })}>Delete</button>
+                            )}
+                          </>
+                        )}
                       </>
                     )}
                   </td>
