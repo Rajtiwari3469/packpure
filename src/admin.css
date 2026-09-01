@@ -513,6 +513,17 @@
   font-weight: 700;
   color: var(--adm-muted);
 }
+.adm-pwd-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.adm-pwd-view .adm-pwd-toggle {
+  position: static;
+  transform: none;
+  width: 26px;
+  height: 26px;
+}
 .adm-pwd-row {
   display: flex;
   gap: 8px;

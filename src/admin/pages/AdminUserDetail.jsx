@@ -18,6 +18,8 @@ export default function AdminUserDetail() {
   const [confirm, setConfirm] = useState(null);
   const [newPw, setNewPw] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [showPwView, setShowPwView] = useState(false);
+  const [lastPw, setLastPw] = useState(null);
   const [pwSaving, setPwSaving] = useState(false);
   useTitle("User Detail");
 
@@ -70,6 +72,8 @@ export default function AdminUserDetail() {
     try {
       await adminApi.setUserPassword(user.id, pw);
       setNewPw("");
+      setLastPw(pw);
+      setShowPwView(true);
       showSuccess("Password updated", `New password set for ${user.fullName}.`);
     } catch (e) {
       showError("Could not set password", e.message);
@@ -139,7 +143,36 @@ export default function AdminUserDetail() {
         <div className="adm-card">
           <h3 className="adm-card-title">Account Password</h3>
           <dl className="adm-dl">
-            <div><dt>Password</dt><dd><span className="adm-pwd-dots">••••••••••</span></dd></div>
+            <div>
+              <dt>Password</dt>
+              <dd className="adm-pwd-view">
+                <span className="adm-pwd-dots">
+                  {showPwView
+                    ? lastPw || "Secure hash only"
+                    : "••••••••••"}
+                </span>
+                <button
+                  type="button"
+                  className="adm-pwd-toggle"
+                  onClick={() => setShowPwView((v) => !v)}
+                  aria-label={showPwView ? "Hide password" : "Show password"}
+                  title={showPwView ? "Hide password" : "Show password"}
+                >
+                  {showPwView ? (
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </dd>
+            </div>
           </dl>
           <p className="adm-muted">
             Only admins can see this section. Passwords are stored as secure hashes and can’t be
