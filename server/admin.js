@@ -93,6 +93,8 @@ router.get("/overview", requireAdmin, async (req, res) => {
     `SELECT
        COUNT(DISTINCT u.id) AS totalUsers,
        SUM(CASE WHEN u.status='active' THEN 1 ELSE 0 END) AS activeUsers,
+       SUM(CASE WHEN u.status='suspended' THEN 1 ELSE 0 END) AS suspendedUsers,
+       SUM(CASE WHEN u.status='deleted' THEN 1 ELSE 0 END) AS binUsers,
        (SELECT COUNT(*) FROM scans) AS totalScans,
        (SELECT COUNT(*) FROM scans WHERE checks NOT LIKE '%"status":"fail"%') AS compScans,
        (SELECT COUNT(*) FROM scans WHERE checks LIKE '%"status":"fail"%') AS nonCompScans,
@@ -107,6 +109,8 @@ router.get("/overview", requireAdmin, async (req, res) => {
     stats: {
       totalUsers: totals ? Number(totals.totalUsers || 0) : 0,
       activeUsers: totals ? Number(totals.activeUsers || 0) : 0,
+      suspendedUsers: totals ? Number(totals.suspendedUsers || 0) : 0,
+      binUsers: totals ? Number(totals.binUsers || 0) : 0,
       totalScans: totals ? Number(totals.totalScans || 0) : 0,
       compliantScans: totals ? Number(totals.compScans || 0) : 0,
       nonCompliantScans: totals ? Number(totals.nonCompScans || 0) : 0,

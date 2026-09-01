@@ -76,9 +76,37 @@ function TreeView() {
   );
 }
 
+function UsersOverviewBar({ stats }) {
+  const total = Number(stats.totalUsers || 0);
+  const active = Number(stats.activeUsers || 0);
+  const suspended = Number(stats.suspendedUsers || 0);
+  const bin = Number(stats.binUsers || 0);
+  const pct = (n) => (total > 0 ? Math.max((n / total) * 100, n > 0 ? 3 : 0) : 0);
+
+  return (
+    <div className="adm-users-bar">
+      <div className="adm-users-bar-head">
+        <span className="adm-users-bar-title">Users overview</span>
+        <span className="adm-users-bar-total">{total} total</span>
+      </div>
+      <div className="adm-users-bar-track">
+        <div className="adm-users-bar-seg adm-bar-active" style={{ width: `${pct(active)}%` }} title={`${active} active`} />
+        <div className="adm-users-bar-seg adm-bar-suspended" style={{ width: `${pct(suspended)}%` }} title={`${suspended} suspended`} />
+        <div className="adm-users-bar-seg adm-bar-bin" style={{ width: `${pct(bin)}%` }} title={`${bin} in bin`} />
+      </div>
+      <div className="adm-users-bar-legend">
+        <span className="adm-users-bar-item"><i className="adm-users-bar-dot adm-bar-active" /> Active <b>{active}</b></span>
+        <span className="adm-users-bar-item"><i className="adm-users-bar-dot adm-bar-suspended" /> Suspended <b>{suspended}</b></span>
+        <span className="adm-users-bar-item"><i className="adm-users-bar-dot adm-bar-bin" /> Bin <b>{bin}</b></span>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminUsers({ treeMode }) {
   const { isSuperAdmin } = useAdmin();
   const [users, setUsers] = useState([]);
+  const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [q, setQ] = useState("");
@@ -91,8 +119,9 @@ export default function AdminUsers({ treeMode }) {
     setLoading(true);
     setError(null);
     try {
-      const d = await adminApi.users({ q, filter, sort });
+      const [d, ov] = await Promise.all([adminApi.users({ q, filter, sort }), adminApi.overview()]);
       setUsers(d.users || []);
+      setOverview(ov.stats || null);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -151,6 +180,10 @@ export default function AdminUsers({ treeMode }) {
         sub={`${counts.total} registered users`}
         actions={<Link className="adm-btn" to="/admin/users/tree">📂 Folder Tree</Link>}
       />
+
+      {overview && (
+        <UsersOverviewBar stats={overview} />
+      )}
 
       <div className="adm-toolbar">
         <input

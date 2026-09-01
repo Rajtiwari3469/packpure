@@ -507,6 +507,76 @@
 .adm-stat-tile.ok b { color: var(--adm-g); }
 .adm-stat-tile.bad b { color: var(--adm-red); }
 
+/* ---------------- Users overview bar ---------------- */
+.adm-users-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: var(--adm-card);
+  border: 1px solid var(--adm-border);
+  border-radius: var(--adm-radius);
+}
+.adm-users-bar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+.adm-users-bar-title {
+  font-weight: 700;
+  color: var(--adm-text);
+}
+.adm-users-bar-total {
+  color: var(--adm-muted);
+}
+.adm-users-bar-track {
+  display: flex;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--adm-border);
+}
+.adm-users-bar-seg {
+  height: 100%;
+  transition: width 0.35s ease;
+}
+.adm-bar-active {
+  background: var(--adm-g);
+}
+.adm-bar-suspended {
+  background: #e2a03f;
+}
+.adm-bar-bin {
+  background: var(--adm-red);
+}
+.adm-users-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--adm-muted);
+}
+.adm-users-bar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.adm-users-bar-item b {
+  color: var(--adm-text);
+  font-weight: 700;
+}
+.adm-users-bar-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+[data-theme="dark"] .adm-bar-suspended {
+  background: #e2a03f;
+}
+
 /* ---------------- Buttons ---------------- */
 .adm-btn {
   display: inline-flex;
