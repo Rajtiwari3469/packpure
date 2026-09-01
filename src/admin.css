@@ -518,6 +518,9 @@
   gap: 8px;
   margin-top: 8px;
 }
+.adm-pwd-row .adm-pwd {
+  flex: 1;
+}
 
 /* ---------------- Account type tabs ---------------- */
 .adm-kind-tabs {
