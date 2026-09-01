@@ -835,6 +835,7 @@
 }
 .adm-table {
   width: 100%;
+  min-width: 920px;
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -874,6 +875,8 @@
 }
 .adm-table .adm-cols {
   white-space: nowrap;
+  min-width: 250px;
+  justify-content: flex-end;
 }
 .adm-table th.adm-ta-c,
 .adm-table td.adm-ta-c {
@@ -883,14 +886,15 @@
 .adm-table td.adm-ta-r {
   text-align: right;
 }
-.adm-table td.adm-cols {
-  justify-content: flex-end;
-}
 .adm-table tbody tr:hover .adm-user-name {
   color: var(--adm-g);
 }
 .adm-login-cell {
-  min-width: 150px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 190px;
 }
 .adm-cell-break {
   word-break: break-word;
