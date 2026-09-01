@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { adminApi } from "../adminApi.js";
 import { useAdmin } from "../AdminContext.jsx";
-import { showSuccess, showError } from "../notify.jsx";
+import { showSuccess, showError } from "../../notify.jsx";
 import {
   Spinner, ErrorState, EmptyState, ConfirmModal, StatusPill, ROLE_LABEL,
   STATUS_LABEL, PageHeader, formatDate, formatDateOnly, initials, useTitle,
