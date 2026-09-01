@@ -76,84 +76,6 @@ function TreeView() {
   );
 }
 
-function formatIST(iso) {
-  if (!iso) return "—";
-  const norm = String(iso).replace(" ", "T").replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
-  const d = new Date(norm);
-  if (isNaN(d.getTime())) return "—";
-  return d.toLocaleString("en-US", {
-    timeZone: "Asia/Kolkata",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
-
-function LoginsModal({ user, onClose }) {
-  const [logins, setLogins] = useState(null);
-  const [error, setError] = useState(null);
-  useEffect(() => {
-    let active = true;
-    setError(null);
-    setLogins(null);
-    adminApi
-      .userLogins(user.id)
-      .then((d) => {
-        if (active) setLogins(d.logins || []);
-      })
-      .catch((e) => {
-        if (active) setError(e.message);
-      });
-    return () => {
-      active = false;
-    };
-  }, [user.id]);
-
-  return (
-    <div className="adm-modal-overlay" onClick={onClose}>
-      <div className="adm-modal adm-modal-wide" onClick={(e) => e.stopPropagation()}>
-        <h3>Login history — {user.fullName}</h3>
-        <p className="adm-muted">{user.email} · shown in IST</p>
-        {error ? (
-          <ErrorState
-            message={error}
-            onRetry={() => {
-              setError(null);
-              setLogins(null);
-              adminApi.userLogins(user.id).then((d) => setLogins(d.logins || [])).catch((e) => setError(e.message));
-            }}
-          />
-        ) : !logins ? (
-          <Spinner />
-        ) : logins.length === 0 ? (
-          <EmptyState title="No logins recorded" sub="Login events will appear here whenever this account signs in." />
-        ) : (
-          <ul className="adm-activity">
-            {logins.map((l) => (
-              <li key={l.id}>
-                <span className="adm-activity-dot adm-dot-newuser" />
-                <div className="adm-activity-body">
-                  <div className="adm-activity-title">
-                    <strong>Account login</strong>
-                    <span className="adm-activity-time">{formatIST(l.created_at)}</span>
-                  </div>
-                  <span className="adm-activity-meta">IST</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="adm-modal-actions">
-          <button className="adm-btn" onClick={onClose}>Close</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function UsersOverviewBar({ stats }) {
   const total = Number(stats.totalUsers || 0);
   const active = Number(stats.activeUsers || 0);
@@ -192,7 +114,6 @@ export default function AdminUsers({ treeMode, binMode }) {
   const [sort, setSort] = useState("newest");
   const [kind, setKind] = useState("users");
   const [confirm, setConfirm] = useState(null);
-  const [loginsUser, setLoginsUser] = useState(null);
   const adminView = kind === "admins";
   const effKind = binMode ? "users" : kind;
   useTitle(binMode ? "User Bin" : treeMode ? "Users Folder Tree" : "Users & Admin");
@@ -352,7 +273,6 @@ export default function AdminUsers({ treeMode, binMode }) {
                 {!adminView && <th className="adm-ta-c">Scans</th>}
                 {!adminView && <th className="adm-ta-c">Issues</th>}
                 <th>Joined</th>
-                <th>Last Login</th>
                 {!adminView && <th className="adm-ta-r">Actions</th>}
               </tr>
             </thead>
@@ -375,10 +295,6 @@ export default function AdminUsers({ treeMode, binMode }) {
                     <td className="adm-ta-c">{u.issueCount > 0 ? <StatusPill value="fail" label={u.issueCount} /> : <span className="adm-muted">0</span>}</td>
                   )}
                   <td className="adm-muted">{formatDateOnly(u.createdAt)}</td>
-                  <td className="adm-login-cell">
-                    <span>{formatIST(u.lastLogin)}</span>
-                    <button className="adm-btn adm-btn-xs adm-btn-ghost" onClick={() => setLoginsUser(u)}>History</button>
-                  </td>
                   {!adminView && isSuperAdmin && u.role === "user" && (
                     <td className="adm-cols">
                       <Link className="adm-btn adm-btn-xs" to={`/admin/users/${u.id}`}>View</Link>
@@ -405,8 +321,6 @@ export default function AdminUsers({ treeMode, binMode }) {
           </table>
         </div>
       )}
-
-      {loginsUser && <LoginsModal user={loginsUser} onClose={() => setLoginsUser(null)} />}
 
       <ConfirmModal
         open={!!confirm}

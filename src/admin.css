@@ -889,13 +889,6 @@
 .adm-table tbody tr:hover .adm-user-name {
   color: var(--adm-g);
 }
-.adm-login-cell {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-width: 190px;
-}
 .adm-cell-break {
   word-break: break-word;
   max-width: 320px;
