@@ -26,7 +26,7 @@ export default function About() {
     <div className="pp-page">
       <section className="pp-page-hero">
         <span className="pp-eyebrow">ABOUT</span>
-        <h1>{get("about", "heading", "AI-assisted legal Pack Pure, made simple")}</h1>
+        <h1>{get("about", "heading", "AI-assisted legal Pack Pure, made simple for use")}</h1>
         <p>
           {get(
             "about",

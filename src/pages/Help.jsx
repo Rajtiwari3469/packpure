@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { showSuccess, showError, showInfo } from "../notify.jsx";
 import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
@@ -166,18 +165,6 @@ export default function Help() {
             </span>
           </div>
         </form>
-      </section>
-
-      <section className="pp-cta">
-        <h2>Want to learn more?</h2>
-        <p>
-          See how PackPure works from label to compliance report.
-        </p>
-        <div className="pp-hero-actions">
-          <Link to="/how-it-works" className="pp-btn pp-btn-primary pp-btn-lg">
-            How It Works
-          </Link>
-        </div>
       </section>
     </div>
   );
