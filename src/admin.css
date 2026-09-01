@@ -875,6 +875,23 @@
 .adm-table .adm-cols {
   white-space: nowrap;
 }
+.adm-table th.adm-ta-c,
+.adm-table td.adm-ta-c {
+  text-align: center;
+}
+.adm-table th.adm-ta-r,
+.adm-table td.adm-ta-r {
+  text-align: right;
+}
+.adm-table td.adm-cols {
+  justify-content: flex-end;
+}
+.adm-table tbody tr:hover .adm-user-name {
+  color: var(--adm-g);
+}
+.adm-login-cell {
+  min-width: 150px;
+}
 .adm-cell-break {
   word-break: break-word;
   max-width: 320px;

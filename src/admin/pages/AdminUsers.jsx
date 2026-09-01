@@ -349,11 +349,11 @@ export default function AdminUsers({ treeMode, binMode }) {
                 <th>User</th>
                 <th>Role</th>
                 <th>Status</th>
-                {!adminView && <th>Scans</th>}
-                {!adminView && <th>Issues</th>}
+                {!adminView && <th className="adm-ta-c">Scans</th>}
+                {!adminView && <th className="adm-ta-c">Issues</th>}
                 <th>Joined</th>
                 <th>Last Login</th>
-                {!adminView && <th>Actions</th>}
+                {!adminView && <th className="adm-ta-r">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -370,9 +370,9 @@ export default function AdminUsers({ treeMode, binMode }) {
                   </td>
                   <td><StatusPill value={u.role} label={ROLE_LABEL[u.role] || u.role} /></td>
                   <td><StatusPill value={u.status} label={STATUS_LABEL[u.status] || u.status} /></td>
-                  {!adminView && <td>{u.scanCount}</td>}
+                  {!adminView && <td className="adm-ta-c">{u.scanCount}</td>}
                   {!adminView && (
-                    <td>{u.issueCount > 0 ? <StatusPill value="fail" label={u.issueCount} /> : <span className="adm-muted">0</span>}</td>
+                    <td className="adm-ta-c">{u.issueCount > 0 ? <StatusPill value="fail" label={u.issueCount} /> : <span className="adm-muted">0</span>}</td>
                   )}
                   <td className="adm-muted">{formatDateOnly(u.createdAt)}</td>
                   <td className="adm-login-cell">
