@@ -193,6 +193,8 @@ export default function AdminUsers({ treeMode, binMode }) {
   const [kind, setKind] = useState("users");
   const [confirm, setConfirm] = useState(null);
   const [loginsUser, setLoginsUser] = useState(null);
+  const adminView = kind === "admins";
+  const effKind = binMode ? "users" : kind;
   useTitle(binMode ? "User Bin" : treeMode ? "Users Folder Tree" : "Users & Admin");
 
   async function load() {
@@ -213,9 +215,6 @@ export default function AdminUsers({ treeMode, binMode }) {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q, filter, sort, effKind]);
-
-  const adminView = kind === "admins";
-  const effKind = binMode ? "users" : kind;
 
   const counts = useMemo(() => {
     const c = { total: users.length, active: 0, suspended: 0, deleted: 0 };
