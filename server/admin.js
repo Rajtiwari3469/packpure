@@ -165,6 +165,7 @@ router.get("/users", requireAdmin, async (req, res) => {
   if (filter === "active") where += ` AND u.status = 'active'`;
   else if (filter === "inactive") where += ` AND (u.status = 'suspended' OR u.status = 'deleted')`;
   else if (filter === "suspended") where += ` AND u.status = 'suspended'`;
+  else if (filter === "bin") where += ` AND u.status = 'deleted'`;
   else if (filter === "new") where += ` AND u.created_at >= datetime('now', '-7 days')`;
   else if (filter === "with_scans") where += ` AND (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id) > 0`;
   else if (filter === "with_issues") where += ` AND (SELECT COUNT(*) FROM scans s WHERE s.user_id = u.id AND s.checks LIKE '%"status":"fail"%') > 0`;
@@ -301,14 +302,31 @@ router.delete("/users/:id", requireSuperAdmin, async (req, res) => {
   if (isAdminRole(row.role)) {
     return res.status(400).json({ error: "Admin accounts cannot be deleted through the user list." });
   }
+  await db.run(`UPDATE users SET status = 'deleted' WHERE id = ?`, [row.id]);
   await db.run(`DELETE FROM sessions WHERE user_id = ?`, [row.id]);
-  await db.run(`DELETE FROM scans WHERE user_id = ?`, [row.id]);
-  await db.run(`DELETE FROM user_logins WHERE user_id = ?`, [row.id]);
-  await db.run(`DELETE FROM user_activities WHERE user_id = ?`, [row.id]);
-  await db.run(`DELETE FROM user_notifications WHERE user_id = ?`, [row.id]);
-  await db.run(`DELETE FROM users WHERE id = ?`, [row.id]);
-  await recordAudit({ adminId: req.user.id, action: "user_deleted", category: "users", detail: `${row.full_name} (${row.id}, ${row.email}) permanently deleted` });
-  res.json({ ok: true });
+  await addNotification({ category: "SECURITY", title: "User moved to bin", detail: `${row.full_name} (${row.id}) moved to bin`, linkType: "user", linkId: row.id });
+  await recordAudit({ adminId: req.user.id, action: "user_moved_to_bin", category: "users", detail: `${row.full_name} (${row.id}, ${row.email}) moved to bin` });
+  res.json({ ok: true, movedToBin: true });
+});
+
+router.post("/users/:id/restore", requireSuperAdmin, async (req, res) => {
+  const row = await db.get(`SELECT id, full_name, email, status FROM users WHERE id = ?`, [req.params.id]);
+  if (!row) return res.status(404).json({ error: "User not found." });
+  if (row.status !== "deleted") {
+    return res.status(400).json({ error: "Only deleted users can be restored." });
+  }
+  await db.run(`UPDATE users SET status = 'active' WHERE id = ?`, [row.id]);
+  await addUserNotification({
+    userId: row.id,
+    type: "account",
+    title: "Account restored",
+    message: "Your PackPure account has been restored. You can sign in again.",
+    severity: "medium",
+    linkType: "help",
+    dedupKey: `restore-${row.id}`,
+  });
+  await recordAudit({ adminId: req.user.id, action: "user_restored", category: "users", detail: `${row.full_name} (${row.id}, ${row.email}) restored from bin` });
+  res.json({ ok: true, restored: true });
 });
 
 router.get("/users/:id/activities", requireAdmin, async (req, res) => {

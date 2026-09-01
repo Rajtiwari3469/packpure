@@ -45,6 +45,7 @@ export const adminApi = {
   setUserStatus: (id, status) =>
     request("PATCH", `${BASE}/users/${id}/status`, { status }),
   deleteUser: (id) => request("DELETE", `${BASE}/users/${id}`),
+  restoreUser: (id) => request("POST", `${BASE}/users/${id}/restore`),
   userActivities: (id) => request("GET", `${BASE}/users/${id}/activities`),
 
   scans: (params = {}) => {

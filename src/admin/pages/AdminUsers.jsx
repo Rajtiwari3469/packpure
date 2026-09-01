@@ -125,6 +125,12 @@ export default function AdminUsers({ treeMode }) {
     load();
   }
 
+  async function restoreUser() {
+    await adminApi.restoreUser(confirm.id);
+    setConfirm(null);
+    load();
+  }
+
   if (treeMode) {
     return (
       <div>
@@ -157,6 +163,7 @@ export default function AdminUsers({ treeMode }) {
           <option value="all">All statuses</option>
           <option value="active">Active</option>
           <option value="suspended">Suspended</option>
+          <option value="bin">Bin (deleted)</option>
           <option value="inactive">Inactive</option>
           <option value="new">New (7 days)</option>
           <option value="with_scans">Has scans</option>
@@ -212,7 +219,11 @@ export default function AdminUsers({ treeMode }) {
                     <Link className="adm-btn adm-btn-xs" to={`/admin/users/${u.id}`}>View</Link>
                     {isSuperAdmin && u.role === "user" && (
                       <>
-                        <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "active" })}>Active</button>
+                        {u.status === "deleted" ? (
+                          <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "restore" })}>Restore</button>
+                        ) : (
+                          <button className="adm-btn adm-btn-xs adm-btn-ok" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "active" })}>Active</button>
+                        )}
                         <button className="adm-btn adm-btn-xs adm-btn-warn" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "suspended" })}>Suspend</button>
                         <button className="adm-btn adm-btn-xs adm-btn-danger" onClick={() => setConfirm({ id: u.id, name: u.fullName, next: "delete" })}>Delete</button>
                       </>
@@ -228,21 +239,28 @@ export default function AdminUsers({ treeMode }) {
       <ConfirmModal
         open={!!confirm}
         title={
-          confirm?.next === "delete" ? "Delete permanently?"
+          confirm?.next === "delete" ? "Move user to bin?"
+            : confirm?.next === "restore" ? "Restore user?"
             : confirm?.next === "suspended" ? "Suspend user?"
             : "Set user active?"
         }
         message={
           confirm?.next === "delete"
-            ? `This will permanently delete "${confirm?.name}" and remove all their data (scans, activity, notifications). This cannot be undone.`
+            ? `This will move "${confirm?.name}" to the bin. They won't be able to sign in, but you can restore them anytime.`
+            : confirm?.next === "restore"
+            ? `Restore "${confirm?.name}"? They will regain access to their account and be able to sign in again.`
             : confirm?.next === "suspended"
             ? `Are you sure you want to suspend "${confirm?.name}"? They will not be able to sign in.`
             : `Are you sure you want to set "${confirm?.name}" to active?`
         }
-        confirmText={confirm?.next === "delete" ? "Delete permanently" : "Confirm"}
-        tone={confirm?.next === "delete" ? "danger" : confirm?.next === "suspended" ? "warn" : "ok"}
+        confirmText={confirm?.next === "delete" ? "Move to bin" : "Confirm"}
+        tone={confirm?.next === "suspended" ? "warn" : "ok"}
         onCancel={() => setConfirm(null)}
-        onConfirm={confirm?.next === "delete" ? () => removeUser() : () => changeStatus(confirm.next)}
+        onConfirm={
+          confirm?.next === "delete" ? () => removeUser()
+            : confirm?.next === "restore" ? () => restoreUser()
+            : () => changeStatus(confirm.next)
+        }
       />
     </div>
   );

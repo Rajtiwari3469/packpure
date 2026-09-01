@@ -50,13 +50,23 @@ export default function AdminUserDetail() {
     window.location.href = "/admin/users";
   }
 
+  async function restoreUser() {
+    await adminApi.restoreUser(user.id);
+    setConfirm(null);
+    load();
+  }
+
   const statusActions =
     isSuperAdmin && user.role === "user" ? (
-      <>
-        <button className="adm-btn adm-btn-ok" onClick={() => setConfirm({ next: "active" })}>Active</button>
-        <button className="adm-btn adm-btn-warn" onClick={() => setConfirm({ next: "suspended" })}>Suspend</button>
-        <button className="adm-btn adm-btn-danger" onClick={() => setConfirm({ next: "delete" })}>Delete</button>
-      </>
+      user.status === "deleted" ? (
+        <button className="adm-btn adm-btn-ok" onClick={() => setConfirm({ next: "restore" })}>Restore</button>
+      ) : (
+        <>
+          <button className="adm-btn adm-btn-ok" onClick={() => setConfirm({ next: "active" })}>Active</button>
+          <button className="adm-btn adm-btn-warn" onClick={() => setConfirm({ next: "suspended" })}>Suspend</button>
+          <button className="adm-btn adm-btn-danger" onClick={() => setConfirm({ next: "delete" })}>Delete</button>
+        </>
+      )
     ) : null;
 
   return (
@@ -148,21 +158,28 @@ export default function AdminUserDetail() {
       <ConfirmModal
         open={!!confirm}
         title={
-          confirm?.next === "delete" ? "Delete permanently?"
+          confirm?.next === "delete" ? "Move user to bin?"
+            : confirm?.next === "restore" ? "Restore user?"
             : confirm?.next === "suspended" ? "Suspend user?"
             : "Set user active?"
         }
         message={
           confirm?.next === "delete"
-            ? `This will permanently delete ${user.fullName} and remove all their data (scans, activity, notifications). This cannot be undone.`
+            ? `This will move ${user.fullName} to the bin. They won't be able to sign in, but you can restore them anytime.`
+            : confirm?.next === "restore"
+            ? `Restore ${user.fullName}? They will regain access to their account and be able to sign in again.`
             : confirm?.next === "suspended"
             ? `Are you sure you want to suspend ${user.fullName}? They will not be able to sign in.`
             : `Are you sure you want to set ${user.fullName} to active?`
         }
-        confirmText={confirm?.next === "delete" ? "Delete permanently" : "Confirm"}
-        tone={confirm?.next === "delete" ? "danger" : confirm?.next === "suspended" ? "warn" : "ok"}
+        confirmText={confirm?.next === "delete" ? "Move to bin" : "Confirm"}
+        tone={confirm?.next === "suspended" ? "warn" : "ok"}
         onCancel={() => setConfirm(null)}
-        onConfirm={confirm?.next === "delete" ? () => removeUser() : () => changeStatus(confirm.next)}
+        onConfirm={
+          confirm?.next === "delete" ? () => removeUser()
+            : confirm?.next === "restore" ? () => restoreUser()
+            : () => changeStatus(confirm.next)
+        }
       />
     </div>
   );
